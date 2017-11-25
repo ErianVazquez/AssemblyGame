@@ -1,0 +1,380 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 10/10/2017 2:33:49 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00000000                             7  
+00000000  =0000000A                  8  BULLET_SIZE_WIDTH               EQU 10
+00000000  =0000000A                  9  BULLET_SIZE_HEIGHT              EQU 10
+00000000  =00000300                 10  BULLET_SPEED                    EQU $300
+00000000                            11  
+00000000  =0000000C                 12  BULLET_DRAW_SIZE_WIDTH          EQU 12
+00000000  =00000007                 13  FULL_ACTIVE_BULLETS             EQU $7
+00000000                            14  
+00000000  =00FFFFFF                 15  BULLET_COLOR                    EQU $00FFFFFF
+00000000                            16  
+00000000                            17  UpdateBullets:
+Line 18 ERROR: Undefined symbol
+00000000  203C 004DBB8E             18          move.l          #GET_KEY_INPUT_TRAP_CODE,d0
+Line 19 ERROR: Undefined symbol
+00000006  223C 004DBB8E             19          move.l          #GET_KEY_INPUT_D1____Sp,d1
+0000000C  4E4F                      20          trap            #15
+0000000E                            21  OneButtonsPressed               
+0000000E  1201                      22          move.b          d1,d1
+00000010  6700 0028                 23          beq             OtherInputDone
+00000014                            24          
+00000014  43F9 000002F8             25          lea             DebounceOneTime,a1
+Line 26 ERROR: Undefined symbol
+0000001A  2439 004DBB8E             26          move.l          (OldTime),d2
+00000020  B491                      27          cmp.l           (a1),d2
+00000022  6D00 0016                 28          blt             OtherInputDone
+Line 29 ERROR: Undefined symbol
+00000026  2239 004DBB8E             29          move.l          (OldTime),d1
+Line 30 ERROR: Undefined symbol
+0000002C  0681 004DBB8E             30          add.l           #DEBOUNCE_TIME,d1
+00000032  2281                      31          move.l          d1,(a1)
+00000034  4EB9 00000048             32          jsr             CreateBullets
+0000003A                            33  OtherInputDone
+0000003A                            34  
+0000003A  4EB9 000000F8             35          jsr             UpdateBulletsPositions
+00000040  4EB9 000001BE             36          jsr             DrawBullets
+00000046                            37          
+00000046  4E75                      38          rts
+00000048                            39          
+00000048                            40  CreateBullets:
+00000048  1039 000002D9             41          move.b          (ActiveBullets),d0
+0000004E  B03C 0007                 42          cmp.b           #FULL_ACTIVE_BULLETS,d0
+00000052  6700 00A2                 43          beq             BulletsFull
+00000056                            44  CreateFirstBullet        
+00000056  7201                      45          moveq.l         #1,d1
+00000058  C200                      46          and.b           d0,d1
+0000005A  6600 001E                 47          bne             CreateSecondBullet
+0000005E                            48          
+0000005E  4DF9 000002DA             49          lea             BulletOnePosition,a6
+00000064  5239 000002D9             50          add.b           #1,(ActiveBullets)
+Line 51 ERROR: Undefined symbol
+0000006A  2439 004DBB8E             51          move.l          (PlayerLookingRight),d2
+00000070  6700 0054                 52          beq             BulletSetNegativeSpeed
+00000074  4EF9 000000DC             53          jmp             BulletSetPositiveSpeed
+0000007A                            54  CreateSecondBullet
+0000007A  E208                      55          lsr.b           #1,d0
+0000007C  7201                      56          moveq.l         #1,d1
+0000007E  C200                      57          and.b           d0,d1
+00000080  6600 001E                 58          bne             CreateThirdBullet
+00000084                            59          
+00000084  4DF9 000002E4             60          lea             BulletTwoPosition,a6
+0000008A  5439 000002D9             61          add.b           #2,(ActiveBullets)
+Line 62 ERROR: Undefined symbol
+00000090  2439 004DBB8E             62          move.l          (PlayerLookingRight),d2
+00000096  6700 002E                 63          beq             BulletSetNegativeSpeed
+0000009A  4EF9 000000DC             64          jmp             BulletSetPositiveSpeed
+000000A0                            65          
+000000A0                            66  CreateThirdBullet
+000000A0  E208                      67          lsr.b           #1,d0
+000000A2  7201                      68          moveq.l         #1,d1
+000000A4  C200                      69          and.b           d0,d1
+000000A6  6600 004E                 70          bne             BulletsFull
+000000AA                            71          
+000000AA  4DF9 000002EE             72          lea             BulletThreePosition,a6
+000000B0  5839 000002D9             73          add.b           #4,(ActiveBullets)
+Line 74 ERROR: Undefined symbol
+000000B6  2439 004DBB8E             74          move.l          (PlayerLookingRight),d2
+000000BC  6700 0008                 75          beq             BulletSetNegativeSpeed
+000000C0  4EF9 000000DC             76          jmp             BulletSetPositiveSpeed
+000000C6                            77          
+000000C6                            78  BulletSetNegativeSpeed
+000000C6  3D7C FD00 0008            79          move.w          #-BULLET_SPEED,8(a6)
+Line 80 ERROR: Undefined symbol
+000000CC  4BF9 004DBB8E             80          lea             PlayerPositionAndSize,a5
+000000D2  2C95                      81          move.l          (a5),(a6)
+000000D4  2D6D 0004 0004            82          move.l          4(a5),4(a6)
+000000DA  4E75                      83          rts
+000000DC                            84  BulletSetPositiveSpeed
+000000DC  3D7C 0300 0008            85          move.w          #BULLET_SPEED,8(a6)
+Line 86 ERROR: Undefined symbol
+000000E2  4BF9 004DBB8E             86          lea             PlayerPositionAndSize,a5
+000000E8  2415                      87          move.l          (a5),d2
+000000EA  D4AD 0008                 88          add.l           8(a5),d2
+000000EE  2C82                      89          move.l          d2,(a6)
+000000F0  2D6D 0004 0004            90          move.l          4(a5),4(a6)
+000000F6                            91  BulletsFull
+000000F6  4E75                      92          rts
+000000F8                            93  
+000000F8                            94  UpdateBulletsPositions:
+Line 95 ERROR: Undefined symbol
+000000F8  2239 004DBB8E             95          move.l          (DeltaTime),d1
+000000FE  7400                      96          moveq.l         #0,d2
+00000100  1439 000002D9             97          move.b          (ActiveBullets),d2
+00000106  6700 00B4                 98          beq             UpdateBulletEnd
+0000010A                            99          
+0000010A                           100  UpdateBulletOne 
+0000010A  7601                     101          moveq.l         #1,d3
+0000010C  C602                     102          and.b           d2,d3
+0000010E  6700 0036                103          beq             UpdateBulletTwo
+00000112                           104           
+00000112  7000                     105          moveq.l         #0,d0
+00000114  41F9 000002DA            106          lea             BulletOnePosition,a0
+0000011A  3028 0008                107          move.w          8(a0),d0
+0000011E  C1C1                     108          muls            d1,d0
+00000120  D090                     109          add.l           (a0),d0
+00000122  2080                     110          move.l          d0,(a0)
+00000124  B0BC FFFFFFF6            111          cmp.l           #-BULLET_SIZE_WIDTH,d0
+0000012A  6D00 0014                112          blt             DestoryOneBullet
+Line 113 ERROR: Invalid syntax
+0000012E                           113          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8,d0
+0000012E  6E00 0010                114          bgt             DestoryOneBullet
+00000132  2080                     115          move.l          d0,(a0)
+00000134  4EF9 00000146            116          jmp             UpdateBulletTwo
+Line 117 ERROR: Symbol value differs between first and second pass
+0000013A                           117  DestoryOneBullet
+0000013A  5339 000002D9            118          sub.b           #1,(ActiveBullets)
+Line 119 ERROR: Symbol value differs between first and second pass
+00000140                           119  UpdateBulletTwo
+00000140  E20A                     120          lsr.b           #1,d2
+00000142  7601                     121          moveq.l         #1,d3
+00000144  C602                     122          and.b           d2,d3
+00000146  6700 003A                123          beq             UpdateBulletThree         
+0000014A                           124          
+0000014A  41F9 000002E4            125          lea             BulletTwoPosition,a0
+00000150  3028 0008                126          move.w          8(a0),d0
+00000154  C1C1                     127          muls            d1,d0
+00000156  D090                     128          add.l           (a0),d0
+00000158  2080                     129          move.l          d0,(a0)
+0000015A  B0BC FFFFFFF6            130          cmp.l           #-BULLET_SIZE_WIDTH,d0
+00000160  6D00 001A                131          blt             DestoryTwoBullet
+Line 132 ERROR: Invalid syntax
+00000164                           132          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8,d0
+00000164  6E00 0016                133          bgt             DestoryTwoBullet
+00000168  2080                     134          move.l          d0,(a0)
+0000016A  4EF9 00000182            135          jmp             UpdateBulletThree
+Line 136 ERROR: Symbol value differs between first and second pass
+00000170                           136  DestoryTwoBullet
+00000170  5539 000002D9            137          sub.b           #2,(ActiveBullets)
+Line 138 ERROR: Symbol value differs between first and second pass
+00000176                           138  UpdateBulletThree
+00000176  E20A                     139          lsr.b           #1,d2
+00000178  7601                     140          moveq.l         #1,d3
+0000017A  C602                     141          and.b           d2,d3
+0000017C  6700 003E                142          beq             UpdateBulletEnd
+00000180                           143          
+00000180  41F9 000002EE            144          lea             BulletThreePosition,a0
+00000186  3028 0008                145          move.w          8(a0),d0
+0000018A  C1C1                     146          muls            d1,d0
+0000018C  D090                     147          add.l           (a0),d0
+0000018E  B0BC FFFFFFF6            148          cmp.l           #-BULLET_SIZE_WIDTH,d0
+00000194  6D00 0020                149          blt             DestoryThirdBullet
+Line 150 ERROR: Invalid syntax
+00000198                           150          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8,d0
+00000198  6E00 001C                151          bgt             DestoryThirdBullet
+0000019C  2080                     152          move.l          d0,(a0)
+0000019E  4EF9 000001BC            153          jmp             UpdateBulletEnd
+Line 154 ERROR: Symbol value differs between first and second pass
+000001A4                           154  DestoryThirdBullet
+000001A4  5939 000002D9            155          sub.b           #4,(ActiveBullets)
+Line 156 ERROR: Symbol value differs between first and second pass
+000001AA                           156  UpdateBulletEnd       
+000001AA  4E75                     157          rts
+000001AC                           158          
+Line 159 ERROR: Symbol value differs between first and second pass
+000001AC                           159  DrawBullets:
+000001AC  223C 00FFFFFF            160          move.l          #BULLET_COLOR,d1
+Line 161 ERROR: Undefined symbol
+000001B2  103C 008E                161          move.b          #SET_PEN_COLOR_COMMAND,d0
+000001B6  4E4F                     162          trap            #15
+Line 163 ERROR: Undefined symbol
+000001B8  103C 008E                163          move.b          #SET_FILL_COLOR_COMMAND,d0
+000001BC  4E4F                     164          trap            #15
+Line 165 ERROR: Undefined symbol
+000001BE  103C 008E                165          move.b          #DRAW_CIRCLE_COMMAND,d0
+000001C2                           166          
+000001C2  1A39 000002D9            167          move.b          (ActiveBullets),d5
+000001C8  6700 0096                168          beq             EndDrawBullets
+000001CC                           169                  
+Line 170 ERROR: Symbol value differs between first and second pass
+000001CC                           170  DrawFirstBullet     
+000001CC  7C01                     171          moveq.l         #1,d6
+000001CE  CC05                     172          and.b           d5,d6
+000001D0  6700 0036                173          beq             DrawSecondBullet
+000001D4                           174          
+000001D4  4DF9 000002DA            175          lea             BulletOnePosition,a6
+000001DA  2216                     176          move.l          (a6),d1
+000001DC  E089                     177          lsr.l           #8,d1
+000001DE  242E 0004                178          move.l          4(a6),d2
+000001E2  E08A                     179          lsr.l           #8,d2
+000001E4  2601                     180          move.l          d1,d3
+000001E6  0683 0000000A            181          add.l           #BULLET_SIZE_WIDTH,d3
+000001EC  2802                     182          move.l          d2,d4
+000001EE  0684 0000000A            183          add.l           #BULLET_SIZE_HEIGHT,d4  
+000001F4  4E4F                     184          trap            #15
+000001F6                           185  
+Line 186 ERROR: Symbol value differs between first and second pass
+000001F6                           186  DrawSecondBullet
+000001F6  E20D                     187          lsr.b           #1,d5  
+000001F8  7C01                     188          moveq.l         #1,d6
+000001FA  CC05                     189          and.b           d5,d6
+000001FC  6700 0036                190          beq             DrawThirdBullet
+00000200                           191      
+00000200  4DF9 000002E4            192          lea             BulletTwoPosition,a6
+00000206  2216                     193          move.l          (a6),d1
+00000208  E089                     194          lsr.l           #8,d1
+0000020A  242E 0004                195          move.l          4(a6),d2
+0000020E  E08A                     196          lsr.l           #8,d2
+00000210  2601                     197          move.l          d1,d3
+00000212  0683 0000000A            198          add.l           #BULLET_SIZE_WIDTH,d3
+00000218  2802                     199          move.l          d2,d4
+0000021A  0684 0000000A            200          add.l           #BULLET_SIZE_HEIGHT,d4  
+00000220  4E4F                     201          trap            #15
+00000222                           202  
+Line 203 ERROR: Symbol value differs between first and second pass
+00000222                           203  DrawThirdBullet    
+00000222  E20D                     204          lsr.b           #1,d5  
+00000224  7C01                     205          moveq.l         #1,d6
+00000226  CC05                     206          and.b           d5,d6
+00000228  6700 0036                207          beq             EndDrawBullets
+0000022C                           208      
+0000022C  4DF9 000002EE            209          lea             BulletThreePosition,a6
+00000232  2216                     210          move.l          (a6),d1
+00000234  E089                     211          lsr.l           #8,d1
+00000236  242E 0004                212          move.l          4(a6),d2
+0000023A  E08A                     213          lsr.l           #8,d2
+0000023C  2601                     214          move.l          d1,d3
+0000023E  0683 0000000A            215          add.l           #BULLET_SIZE_WIDTH,d3
+00000244  2802                     216          move.l          d2,d4
+00000246  0684 0000000A            217          add.l           #BULLET_SIZE_HEIGHT,d4  
+0000024C  4E4F                     218          trap            #15
+Line 219 ERROR: Symbol value differs between first and second pass
+0000024E                           219  EndDrawBullets
+0000024E  4E75                     220          rts
+00000250                           221      
+Line 222 ERROR: Symbol value differs between first and second pass
+00000250                           222  EraseBullets:
+00000250  1039 000002D9            223          move.b          (ActiveBullets),d0
+Line 224 ERROR: Symbol value differs between first and second pass
+00000256                           224  EraseFirstBullet
+00000256  7201                     225          moveq.l         #1,d1
+00000258  C200                     226          and.b           d0,d1
+0000025A  6700 0020                227          beq             EraseSecondBullet
+0000025E                           228          
+0000025E  4DF9 000002DA            229          lea             BulletOnePosition,a6
+00000264  4EB9 000002AA            230          jsr             EraseCall
+0000026A                           231          
+Line 232 ERROR: Symbol value differs between first and second pass
+0000026A                           232  EraseSecondBullet
+0000026A  E208                     233          lsr.b           #1,d0
+0000026C  7201                     234          moveq.l         #1,d1
+0000026E  C200                     235          and.b           d0,d1
+00000270  6700 0020                236          beq             EraseThirdBullet
+00000274  4DF9 000002E4            237          lea             BulletTwoPosition,a6
+0000027A  4EB9 000002AA            238          jsr             EraseCall
+00000280                           239          
+Line 240 ERROR: Symbol value differs between first and second pass
+00000280                           240  EraseThirdBullet
+00000280  E208                     241          lsr.b           #1,d0
+00000282  7201                     242          moveq.l         #1,d1
+00000284  C200                     243          and.b           d0,d1
+00000286  6700 004E                244          beq             EraseBulletDone
+0000028A  4DF9 000002EE            245          lea             BulletThreePosition,a6
+00000290  4EB9 000002AA            246          jsr             EraseCall
+00000296  4E75                     247          rts
+Line 248 ERROR: Symbol value differs between first and second pass
+00000298                           248  EraseCall
+00000298  2016                     249          move.l          (a6),d0
+0000029A  E088                     250          lsr.l           #8,d0
+0000029C  5380                     251          sub.l           #1,d0
+0000029E  222E 0004                252          move.l          4(a6),d1
+000002A2  E089                     253          lsr.l           #8,d1
+000002A4  0481 FFFFFFFF            254          sub.l           #-1,d1
+000002AA                           255  
+Line 256 ERROR: Undefined symbol
+000002AA  41F9 004DBB8E            256          lea.l           Bitmap, a0
+000002B0  2000                     257          move.l          d0,d0
+000002B2  2201                     258          move.l          d1,d1
+000002B4  740C                     259          move.l          #BULLET_DRAW_SIZE_WIDTH,d2
+000002B6  760A                     260          move.l          #BULLET_SIZE_HEIGHT,d3
+000002B8  2800                     261          move.l          d0,d4
+000002BA  2A01                     262          move.l          d1,d5
+Line 263 ERROR: Undefined symbol
+000002BC  4EB9 004DBB8E            263          jsr             DrawBackgroundBitmap
+000002C2  4E75                     264          rts
+Line 265 ERROR: Symbol value differs between first and second pass
+000002C4                           265  EraseBulletDone
+000002C4  4E75                     266          rts        
+000002C6                           267  
+Line 268 ERROR: Symbol value differs between first and second pass
+000002C6=                          268  AllowedBullets              dc.b 3
+Line 269 ERROR: Symbol value differs between first and second pass
+000002C6=                          269  ActiveBullets               dc.b 0
+Line 270 ERROR: Symbol value differs between first and second pass
+000002C6=                          270  BulletOnePosition           dc.l 0<<8,0<<8
+Line 271 ERROR: Symbol value differs between first and second pass
+000002C6=                          271  BulletOneSpeed              dc.w 0
+Line 272 ERROR: Symbol value differs between first and second pass
+000002C6=                          272  BulletTwoPosition           dc.l 0<<8,0<<8
+Line 273 ERROR: Symbol value differs between first and second pass
+000002C6=                          273  BulletTwoSpeed              dc.w 0
+Line 274 ERROR: Symbol value differs between first and second pass
+000002C6=                          274  BulletThreePosition         dc.l 0<<8,0<<8
+Line 275 ERROR: Symbol value differs between first and second pass
+000002C6=                          275  BulletThreeSpeed            dc.w 0
+000002C6                           276  
+Line 277 ERROR: Symbol value differs between first and second pass
+000002C6=                          277  DebounceOneTime             dc.l 0
+000002C6                           278  
+Line 279 WARNING: END directive missing, starting address not set
+
+45 errors detected
+1 warning generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+ACTIVEBULLETS       2D9
+ALLOWEDBULLETS      2D8
+BULLETONEPOSITION   2DA
+BULLETONESPEED      2E2
+BULLETSETNEGATIVESPEED  C6
+BULLETSETPOSITIVESPEED  DC
+BULLETSFULL         F6
+BULLETTHREEPOSITION  2EE
+BULLETTHREESPEED    2F6
+BULLETTWOPOSITION   2E4
+BULLETTWOSPEED      2EC
+BULLET_COLOR        FFFFFF
+BULLET_DRAW_SIZE_WIDTH  C
+BULLET_SIZE_HEIGHT  A
+BULLET_SIZE_WIDTH   A
+BULLET_SPEED        300
+CREATEBULLETS       48
+CREATEFIRSTBULLET   56
+CREATESECONDBULLET  7A
+CREATETHIRDBULLET   A0
+DEBOUNCEONETIME     2F8
+DESTORYONEBULLET    140
+DESTORYTHIRDBULLET  1B6
+DESTORYTWOBULLET    17C
+DRAWBULLETS         1BE
+DRAWFIRSTBULLET     1DE
+DRAWSECONDBULLET    208
+DRAWTHIRDBULLET     234
+ENDDRAWBULLETS      260
+ERASEBULLETDONE     2D6
+ERASEBULLETS        262
+ERASECALL           2AA
+ERASEFIRSTBULLET    268
+ERASESECONDBULLET   27C
+ERASETHIRDBULLET    292
+FULL_ACTIVE_BULLETS  7
+ONEBUTTONSPRESSED   E
+OTHERINPUTDONE      3A
+UPDATEBULLETEND     1BC
+UPDATEBULLETONE     10A
+UPDATEBULLETS       0
+UPDATEBULLETSPOSITIONS  F8
+UPDATEBULLETTHREE   182
+UPDATEBULLETTWO     146

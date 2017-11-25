@@ -1,0 +1,314 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 10/6/2017 8:12:10 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      :
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00000000                             7      
+00000000  =00000050                  8  PEN_COLOR_TRAP_CODE                     EQU     80
+00000000  =00000052                  9  DRAW_PIXEL_TRAP_CODE                    EQU     82
+00000000  =00000021                 10  SET_OUTPUT_RESOLUTION_TRAP_CODE         EQU     33
+00000000                            11  
+00000000  =0000424D                 12  BITMAP_HEADER_FIELD                     EQU     16973
+00000000  =00000012                 13  BITMAP_WIDTH_OFFSET                     EQU     18
+00000000  =00000016                 14  BITMAP_HEIGHT_OFFSET                    EQU     22
+00000000  =0000000A                 15  BITMAP_PIXEL_ARRAY_OFFSET               EQU     10
+00000000  =00000036                 16  BITMAP_COLOR_ARRAY_OFFSET               EQU     54
+00000000  =0000002E                 17  BITMAP_NUM_OF_COLOR_IN_PALETTE          EQU     46
+00000000                            18  
+00000000  =00000004                 19  STACK_ARGUMENT_ONE                      EQU     4
+00000000  =00000008                 20  STACK_ARGUMENT_TWO                      EQU     8
+00000000  =0000000C                 21  STACK_ARGUMENT_THREE                    EQU     12
+00000000  =00000010                 22  STACK_ARGUMENT_FOUR                     EQU     16
+00000000  =00000014                 23  STACK_ARGUMENT_FIVE                     EQU     20
+00000000  =00000018                 24  STACK_ARGUMENT_SIX                      EQU     24
+00000000  =0000001C                 25  STACK_ARGUMENT_SEVEN                    EQU     28
+00000000                            26  
+00000000  =00000004                 27  LONG_LENGTH_IN_BYTES                    EQU     4
+00000000                            28  
+00000000  =00000280                 29  OUTPUT_WIDTH                            EQU     640
+00000000  =000001E0                 30  OUTPUT_HEIGHT                           EQU     480
+00000000                            31     
+00000000                            32  ;START    ORG    $1000
+00000000                            33          
+00000000                            34  TurnAddressToBigEndian: ; address in d7, returns address in d7
+00000000  E15F                      35          rol.w       #8, d7
+00000002  4847                      36          swap        d7
+00000004  E15F                      37          rol.w       #8, d7 
+00000006  4E75                      38          rts
+00000008                            39  
+00000008                            40  DrawBitmap ;Arguemnts bitmap address, x,y,width,height (of bitmap) and x,y (where to draw)
+00000008                            41     
+00000008  226F 001C                 42          move.l      STACK_ARGUMENT_SEVEN(sp),a1     ; check if valid bitmap
+0000000C                            43          
+0000000C                            44          ;get address (in memeory of pixel array) and put it into a2
+0000000C  2449                      45          move.l      a1,a2
+0000000E  D5FC 0000000A             46          add.l       #BITMAP_PIXEL_ARRAY_OFFSET,a2
+00000014  2E12                      47          move.l      (a2),d7
+00000016  4EB8 0000                 48          jsr         TurnAddressToBigEndian
+0000001A  2447                      49          move.l      d7,a2
+0000001C  D5C9                      50          add.l       a1,a2
+0000001E                            51          
+0000001E                            52          ;might need to change to long but if only 256 colors then byte will work
+0000001E                            53          ;go to non palette version if there is 0 colors in the palette
+0000001E  1029 002E                 54          move.b      BITMAP_NUM_OF_COLOR_IN_PALETTE(a1),d0
+00000022  6700 00F2                 55          beq         DrawNonPalette   
+00000026                            56          
+00000026                            57  DrawPalette:
+00000026                            58          ;store the location of the color array to later offset
+00000026  2649                      59          move.l      a1,a3
+00000028  D7FC 00000036             60          add.l       #BITMAP_COLOR_ARRAY_OFFSET,a3
+0000002E  2E13                      61          move.l      (a3),d7
+00000030  4EB8 0000                 62          jsr         TurnAddressToBigEndian
+00000034  D7C7                      63          add.l       d7,a3
+00000036                            64  
+00000036  242F 0004                 65          move.l      STACK_ARGUMENT_ONE(sp),d2
+0000003A  D4AF 000C                 66          add.l       STACK_ARGUMENT_THREE(sp),d2
+0000003E  5382                      67          sub.l       #1,d2
+00000040                            68          
+00000040  262F 0008                 69          move.l      STACK_ARGUMENT_TWO(sp),d3
+00000044                            70       
+00000044  282F 000C                 71          move.l      STACK_ARGUMENT_THREE(sp),d4
+00000048  5284                      72          add.l       #1,d4
+0000004A                            73          
+0000004A  2A2F 0010                 74          move.l      STACK_ARGUMENT_FOUR(sp),d5
+0000004E                            75  
+0000004E  2E29 0012                 76          move.l      BITMAP_WIDTH_OFFSET(a1),d7      ;store the offset between rows
+00000052  4EB8 0000                 77          jsr         TurnAddressToBigEndian
+00000056  2C07                      78          move.l      d7,d6
+00000058  CCBC 00000003             79          and.l       #3,d6                           ;padding
+0000005E  CCFC 0003                 80          mulu        #3,d6
+00000062  CCBC 00000003             81          and.l       #3,d6                           ;padding
+00000068  DE86                      82          add.l       d6,d7
+0000006A  2A47                      83          move.l      d7,a5
+0000006C  9EAF 0010                 84          sub.l       STACK_ARGUMENT_FOUR(sp),d7 
+00000070  2C47                      85          move.l      d7,a6
+00000072                            86          
+00000072  204A                      87          move.l      a2,a0
+00000074  2E29 0016                 88          move.l      BITMAP_HEIGHT_OFFSET(a1),d7
+00000078  4EB8 0000                 89          jsr         TurnAddressToBigEndian
+0000007C  9EAF 000C                 90          sub.l       STACK_ARGUMENT_THREE(sp),d7
+00000080  9EAF 0014                 91          sub.l       STACK_ARGUMENT_FIVE(sp),d7
+00000084  2C0D                      92          move.l      a5,d6
+00000086  CCC7                      93          mulu        d7,d6
+00000088  DCAF 0018                 94          add.l       STACK_ARGUMENT_SIX(sp),d6
+0000008C  D1C6                      95          add.l       d6,a0
+0000008E                            96          
+0000008E  2E05                      97          move.l      d5,d7
+00000090  CEBC 00000001             98          and.l       #1,d7
+00000096                            99  
+00000096                           100  PaletteEvenOrOdd: 
+00000096  3E07                     101          move        d7,d7
+00000098  6700 0026                102          beq         DrawPaletteLoop
+0000009C                           103  DrawOnePointPalette:
+0000009C  284B                     104          move.l      a3,a4
+0000009E  4246                     105          clr.w       d6
+000000A0  DC18                     106          add.b       (a0)+,d6
+000000A2  E54E                     107          lsl.w       #2,d6
+000000A4  D9C6                     108          add.l       d6,a4
+000000A6  2214                     109          move.l      (a4),d1                     ;get color value into d1 to set pen color
+000000A8  E089                     110          lsr.l       #8,d1
+000000AA                           111          
+000000AA                           112          ;Set pen color
+000000AA  7050                     113          move.l      #PEN_COLOR_TRAP_CODE,d0
+000000AC  4E4F                     114          trap        #15
+000000AE                           115          
+000000AE                           116          ;Color at this point
+000000AE  2203                     117          move.l      d3,d1
+000000B0  7052                     118          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+000000B2  4E4F                     119          trap        #15
+000000B4                           120          
+000000B4  5283                     121          addi.l      #1,d3
+000000B6  0685 FFFFFFFF            122          addi.l      #-1,d5
+000000BC  6700 003E                123          beq         FinishInnerLoopPalette
+000000C0                           124  
+000000C0                           125  DrawPaletteLoop: 
+000000C0                           126          
+000000C0  284B                     127          move.l      a3,a4
+000000C2  2A4B                     128          move.l      a3,a5
+000000C4  7C00                     129          moveq.l     #0,d6
+000000C6  DC18                     130          add.b       (a0)+,d6
+000000C8  4846                     131          swap        d6
+000000CA  DC18                     132          add.b       (a0)+,d6
+000000CC  E58E                     133          lsl.l       #2,d6
+000000CE  D8C6                     134          add.w       d6,a4
+000000D0  4846                     135          swap        d6
+000000D2  DAC6                     136          add.w       d6,a5
+000000D4  2215                     137          move.l      (a5),d1                     ;get color value into d1 to set pen color
+000000D6  E089                     138          lsr.l       #8,d1
+000000D8                           139          
+000000D8                           140          ;Set pen color
+000000D8  7050                     141          move.l      #PEN_COLOR_TRAP_CODE,d0
+000000DA  4E4F                     142          trap        #15
+000000DC                           143          
+000000DC                           144          ;Color at this point
+000000DC  2203                     145          move.l      d3,d1
+000000DE  7052                     146          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+000000E0  4E4F                     147          trap        #15
+000000E2                           148          
+000000E2  5283                     149          addq.l      #1,d3       
+000000E4  2214                     150          move.l      (a4),d1                     ;get color value into d1 to set pen color
+000000E6  E089                     151          lsr.l       #8,d1
+000000E8                           152          
+000000E8                           153          ;Set pen color
+000000E8  7050                     154          move.l      #PEN_COLOR_TRAP_CODE,d0
+000000EA  4E4F                     155          trap        #15
+000000EC                           156          
+000000EC                           157          ;Color at this point
+000000EC  2203                     158          move.l      d3,d1
+000000EE  7052                     159          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+000000F0  4E4F                     160          trap        #15
+000000F2                           161          
+000000F2  5283                     162          addi.l      #1,d3
+000000F4  0685 FFFFFFFE            163          addi.l      #-2,d5
+000000FA  66C4                     164          bne         DrawPaletteLoop
+000000FC                           165  FinishInnerLoopPalette:
+000000FC  262F 0008                166          move.l      STACK_ARGUMENT_TWO(sp),d3
+00000100  2A2F 0010                167          move.l      STACK_ARGUMENT_FOUR(sp),d5
+00000104  D1CE                     168          add.l       a6,a0
+00000106  0682 FFFFFFFF            169          addi.l      #-1,d2
+0000010C  0684 FFFFFFFF            170          addi.l      #-1,d4
+00000112  6682                     171          bne         PaletteEvenOrOdd
+00000114                           172         
+00000114  4E75                     173          rts   
+00000116                           174       
+00000116                           175          
+00000116                           176  DrawNonPalette:
+00000116                           177          
+00000116  242F 0004                178          move.l      STACK_ARGUMENT_ONE(sp),d2
+0000011A  D4AF 000C                179          add.l       STACK_ARGUMENT_THREE(sp),d2
+0000011E  5382                     180          sub.l       #1,d2
+00000120                           181          
+00000120  262F 0008                182          move.l      STACK_ARGUMENT_TWO(sp),d3
+00000124  2643                     183          move.l      d3,a3
+00000126                           184       
+00000126  282F 000C                185          move.l      STACK_ARGUMENT_THREE(sp),d4
+0000012A  5284                     186          add.l       #1,d4
+0000012C                           187          
+0000012C  2A2F 0010                188          move.l      STACK_ARGUMENT_FOUR(sp),d5
+00000130  2845                     189          move.l      d5,a4
+00000132                           190  
+00000132  2E29 0012                191          move.l      BITMAP_WIDTH_OFFSET(a1),d7      ;store the offset between rows
+00000136  4EB8 0000                192          jsr         TurnAddressToBigEndian
+0000013A  2C07                     193          move.l      d7,d6
+0000013C  DE86                     194          add.l       d6,d7
+0000013E  DE86                     195          add.l       d6,d7
+00000140  CCBC 00000003            196          and.l       #3,d6
+00000146  DE86                     197          add.l       d6,d7
+00000148  2A47                     198          move.l      d7,a5
+0000014A  9EAF 0010                199          sub.l       STACK_ARGUMENT_FOUR(sp),d7  
+0000014E  9EAF 0010                200          sub.l       STACK_ARGUMENT_FOUR(sp),d7
+00000152  9EAF 0010                201          sub.l       STACK_ARGUMENT_FOUR(sp),d7  
+00000156  2C47                     202          move.l      d7,a6
+00000158                           203          
+00000158  204A                     204          move.l      a2,a0
+0000015A  2E29 0016                205          move.l      BITMAP_HEIGHT_OFFSET(a1),d7
+0000015E  4EB8 0000                206          jsr         TurnAddressToBigEndian
+00000162  9EAF 000C                207          sub.l       STACK_ARGUMENT_THREE(sp),d7
+00000166  9EAF 0014                208          sub.l       STACK_ARGUMENT_FIVE(sp),d7
+0000016A  2C0D                     209          move.l      a5,d6
+0000016C  CCC7                     210          mulu        d7,d6
+0000016E  DCAF 0018                211          add.l       STACK_ARGUMENT_SIX(sp),d6
+00000172  DCAF 0018                212          add.l       STACK_ARGUMENT_SIX(sp),d6
+00000176  DCAF 0018                213          add.l       STACK_ARGUMENT_SIX(sp),d6
+0000017A  D1C6                     214          add.l       d6,a0
+0000017C                           215          
+0000017C  2C08                     216          move.l      a0,d6
+0000017E  CCBC 00000001            217          and.l       #1,d6
+00000184  1E06                     218          move.b      d6,d7
+00000186                           219  
+00000186                           220  DrawNonPaletteLoop:
+00000186                           221  
+00000186  1C06                     222          move.b      d6,d6
+00000188  6600 0010                223          bne         DrawNonPaletteOdd
+0000018C                           224          
+0000018C                           225  DrawNonPaletteEven:
+0000018C  2210                     226          move.l      (a0),d1
+0000018E  E089                     227          lsr.l       #8,d1
+00000190  5688                     228          add.l       #3,a0      
+00000192  7C01                     229          moveq.l     #1,d6
+00000194  4EF9 000001A4            230          jmp         DrawNonPaletteDrawer
+0000019A                           231          
+0000019A                           232  DrawNonPaletteOdd:
+0000019A  4241                     233          clr.w       d1
+0000019C  1218                     234          move.b      (a0)+,d1
+0000019E  4841                     235          swap        d1
+000001A0  3218                     236          move.w      (a0)+,d1
+000001A2  7C00                     237          moveq.l     #0,d6
+000001A4                           238          
+000001A4                           239  DrawNonPaletteDrawer:
+000001A4                           240          ;Set pen color
+000001A4  7050                     241          move.l      #PEN_COLOR_TRAP_CODE,d0
+000001A6  4E4F                     242          trap        #15
+000001A8                           243          
+000001A8                           244          ;draw pixel
+000001A8  2203                     245          move.l      d3,d1
+000001AA  7052                     246          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+000001AC  4E4F                     247          trap        #15
+000001AE                           248  
+000001AE  5283                     249          addi.l      #1,d3
+000001B0  0685 FFFFFFFF            250          addi.l      #-1,d5
+000001B6  66CE                     251          bne         DrawNonPaletteLoop       
+000001B8  260B                     252          move.l      a3,d3
+000001BA  2A0C                     253          move.l      a4,d5
+000001BC  D1CE                     254          add.l       a6,a0
+000001BE  1C07                     255          move.b      d7,d6
+000001C0  0682 FFFFFFFF            256          addi.l      #-1,d2
+000001C6  0684 FFFFFFFF            257          addi.l      #-1,d4
+000001CC  66B8                     258          bne         DrawNonPaletteLoop
+000001CE                           259          
+000001CE  4E75                     260          rts
+000001D0                           261               
+000001D0                           262  ;Bitmap      INCBIN "ancient-city-in-the-desert-background-bmp-basic24.bmp"
+000001D0                           263  ;Bitmap      INCBIN "ancient-city-in-the-desert-background-bmp-basic24_three_padding.bmp"
+000001D0                           264  Bitmap      INCBIN "ancient-city-in-the-desert-background-bmp-color-table.bmp"
+0004B528                           265  ;Bitmap      INCBIN "ancient-city-in-the-desert-background-bmp-color-table_padding.bmp"
+0004B528                           266  ;Bitmap      INCBIN "1024Image_nonpallet.bmp"
+0004B528                           267  ;Bitmap       INCBIN "1024Image_pallet.bmp"
+0004B528                           268  
+Line 269 ERROR: Undefined symbol
+0004B528                           269          END    START        ; last line of source
+
+1 error detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+BITMAP              1D0
+BITMAP_COLOR_ARRAY_OFFSET  36
+BITMAP_HEADER_FIELD  424D
+BITMAP_HEIGHT_OFFSET  16
+BITMAP_NUM_OF_COLOR_IN_PALETTE  2E
+BITMAP_PIXEL_ARRAY_OFFSET  A
+BITMAP_WIDTH_OFFSET  12
+DRAWBITMAP          8
+DRAWNONPALETTE      116
+DRAWNONPALETTEDRAWER  1A4
+DRAWNONPALETTEEVEN  18C
+DRAWNONPALETTELOOP  186
+DRAWNONPALETTEODD   19A
+DRAWONEPOINTPALETTE  9C
+DRAWPALETTE         26
+DRAWPALETTELOOP     C0
+DRAW_PIXEL_TRAP_CODE  52
+FINISHINNERLOOPPALETTE  FC
+LONG_LENGTH_IN_BYTES  4
+OUTPUT_HEIGHT       1E0
+OUTPUT_WIDTH        280
+PALETTEEVENORODD    96
+PEN_COLOR_TRAP_CODE  50
+SET_OUTPUT_RESOLUTION_TRAP_CODE  21
+STACK_ARGUMENT_FIVE  14
+STACK_ARGUMENT_FOUR  10
+STACK_ARGUMENT_ONE  4
+STACK_ARGUMENT_SEVEN  1C
+STACK_ARGUMENT_SIX  18
+STACK_ARGUMENT_THREE  C
+STACK_ARGUMENT_TWO  8
+TURNADDRESSTOBIGENDIAN  0

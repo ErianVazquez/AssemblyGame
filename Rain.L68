@@ -1,0 +1,2355 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 10/16/2017 11:42:08 PM
+
+00001000                             1  START   ORG     $1000
+00001000                             2  
+00001000                             3  ALL_REG                         REG     D0-D7/A0-A6
+00001000                             4  
+00001000  =00000050                  5  SET_PEN_COLOR_COMMAND           EQU     80
+00001000  =00000051                  6  SET_FILL_COLOR_COMMAND          EQU     81
+00001000  =00000058                  7  DRAW_CIRCLE_COMMAND             EQU     88
+00001000  =00000057                  8  DRAW_RECT_COMMAND               EQU     87
+00001000                             9  
+00001000  =0000000B                 10  CLEAR_SCREEN_COMMAND            EQU     11
+00001000  =0000FF00                 11  CLEAR_SCREEN_MAGIC_VAL          EQu     $FF00
+00001000  =0000005C                 12  DRAWING_MODE_TRAP_CODE          EQU     92
+00001000  =00000011                 13  DOUBLE_BUFFERED_MODE            EQU     17
+00001000  =0000005E                 14  REPAINT_SCREEN_TRAP_CODE        EQU     94
+00001000  =00000008                 15  GET_TIME_SINCE_MIDNIGHT         EQU     8
+00001000                            16  
+00001000  =0000001E                 17  LEFT_SIDE_OF_SCREEN             EQU     30
+00001000  =00000262                 18  RIGHT_SIDE_OF_SCREEN            EQU     610
+00001000  =00000190                 19  BOTTOM_SIDE_OF_SCREEN           EQU     400
+00001000                            20  
+00001000  =00000280                 21  BACKGROUND_IMG_WIDTH            EQU     640
+00001000  =000001E0                 22  BACKGROUND_IMG_HEIGHT           EQU     480
+00001000                            23  
+00001000  =00000019                 24  DEBOUNCE_TIME                   EQU     25
+00001000                            25  
+00001000  =00FFFFFF                 26  WHITE                           EQU     $00FFFFFF
+00001000  =00000000                 27  BLACK                           EQU     $00000000
+00001000                            28  
+00001000  =00000078                 29  TIME_TO_KILL_BOSS               EQU     120
+00001000                            30  
+00001000  =00000052                 31  GET_KEY_INPUT_D1___R            EQU     $00000052
+00001000                            32  
+00001000  =0000001E                 33  BLACK_BOX_LEFT_SIDE_OF_SCREEN   EQU     30
+00001000  =0000002D                 34  BLACK_BOX_TOP_SIDE_OF_SCREEN    EQU     45
+00001000  =00000262                 35  BLACK_BOX_RIGHT_SIDE_OF_SCREEN  EQU     610
+00001000  =00000190                 36  BLACK_BOX_BOTTOM_SIDE_OF_SCREEN EQU     400
+00001000                            37  
+00001000                            38  ;Setup
+00001000                            39          *set double buffered mode
+00001000  103C 005C                 40          move.b          #DRAWING_MODE_TRAP_CODE,d0
+00001004  123C 0011                 41          move.b          #DOUBLE_BUFFERED_MODE,d1
+00001008  4E4F                      42          trap            #15
+0000100A                            43  
+0000100A  4EB9 0004F178             44          jsr             seedRandomNumber
+00001010                            45  
+00001010  41F9 00002518             46          lea.l           Bitmap, a0
+00001016  7000                      47          move.l          #0, d0
+00001018  7200                      48          move.l          #0, d1
+0000101A  243C 00000280             49          move.l          #BACKGROUND_IMG_WIDTH, d2
+00001020  263C 000001E0             50          move.l          #BACKGROUND_IMG_HEIGHT, d3
+00001026  7800                      51          move.l          #0, d4
+00001028  7A00                      52          move.l          #0, d5
+0000102A                            53          
+0000102A  2F08                      54          move.l          a0, -(sp)
+0000102C  2F00                      55          move.l          d0, -(sp)
+0000102E  2F01                      56          move.l          d1, -(sp)
+00001030  2F02                      57          move.l          d2, -(sp)
+00001032  2F03                      58          move.l          d3, -(sp)
+00001034  2F04                      59          move.l          d4, -(sp)
+00001036  2F05                      60          move.l          d5, -(sp)
+00001038                            61  
+00001038  4EB9 0000224C             62          jsr             DrawBitmap
+0000103E  DFFC 0000001C             63          add.l           #28, sp
+00001044                            64          
+00001044  7200                      65          move.l          #Black,d1
+00001046                            66          
+00001046  7050                      67          move.l          #SET_PEN_COLOR_COMMAND,d0
+00001048  4E4F                      68          trap            #15
+0000104A  7051                      69          move.l          #SET_FILL_COLOR_COMMAND,d0
+0000104C  4E4F                      70          trap            #15
+0000104E                            71  
+0000104E  103C 0057                 72          move.b          #DRAW_RECT_COMMAND,d0
+00001052  721E                      73          move.l          #BLACK_BOX_LEFT_SIDE_OF_SCREEN,d1
+00001054  742D                      74          move.l          #BLACK_BOX_TOP_SIDE_OF_SCREEN,d2
+00001056  263C 00000262             75          move.l          #BLACK_BOX_RIGHT_SIDE_OF_SCREEN,d3
+0000105C  283C 00000190             76          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d4
+00001062  4E4F                      77          trap            #15
+00001064                            78          
+00001064  4EB9 000011C2             79          jsr             DrawDroppers
+0000106A                            80          
+0000106A  4EB9 000011BA             81          jsr             swapBuffers
+00001070                            82  
+00001070  4EB9 00001116             83          jsr             GetDeltaTime
+00001076  23F9 0000122E 000015C8    84          move.l          (OldTime),(PlayerVulnerabilityTime)
+00001080  2039 0000122E             85          move.l          (OldTime),d0
+00001086  0680 00002EE0             86          add.l           #TIME_TO_KILL_BOSS*100,d0
+0000108C  23C0 00001232             87          move.l          d0,(EndTime)
+00001092                            88          
+00001092                            89  GameLoop:
+00001092  4EB9 00001116             90          jsr             GetDeltaTime 
+00001098                            91          
+00001098  4EB9 0000118C             92          jsr             ClearScreen
+0000109E                            93          
+0000109E  4EB9 0000114C             94          jsr             UpdateGameObjects
+000010A4                            95          
+000010A4  4EB9 000013C2             96          jsr             CheckCollision
+000010AA                            97          
+000010AA  4EB9 0000116C             98          jsr             DrawGameObjects
+000010B0                            99          
+000010B0  4EB9 000011BA            100          jsr             swapBuffers
+000010B6                           101          
+000010B6  4EB9 000010BE            102          jsr             CheckGameStatus
+000010BC                           103          
+000010BC  60D4                     104          bra             GameLoop
+000010BE                           105  
+000010BE                           106  CheckGameStatus
+000010BE                           107  
+000010BE  43F9 0000123A            108          lea             GameOverBossKilled,a1   
+000010C4  2039 000015C0            109          move.l          (BossHealth),d0
+000010CA  6B00 0026                110          bmi             GameOver
+000010CE  43F9 00001242            111          lea             GameOverPlayerKilled,a1 
+000010D4  2039 000015C4            112          move.l          (PlayerHealth),d0
+000010DA  6B00 0016                113          bmi             GameOver
+000010DE  43F9 0000124B            114          lea             GameOverTimeRanOut,a1   
+000010E4  2039 00001236            115          move.l          (TimeLeft),d0
+000010EA  48C0                     116          ext.l           d0
+000010EC  6B00 0004                117          bmi             GameOver
+000010F0                           118  
+000010F0  4E75                     119          rts
+000010F2                           120  GameOver
+000010F2                           121          
+000010F2  7200                     122          move.l          #Black,d1
+000010F4  7051                     123          move.l          #SET_FILL_COLOR_COMMAND,d0
+000010F6  4E4F                     124          trap            #15
+000010F8                           125  
+000010F8  700D                     126          move.l          #13,d0
+000010FA  4E4F                     127          trap            #15
+000010FC  4EB9 000011BA            128          jsr             swapBuffers
+00001102                           129          
+00001102                           130  GameOverLoop
+00001102                           131          
+00001102  203C 00000013            132          move.l          #GET_KEY_INPUT_TRAP_CODE,d0
+00001108  7252                     133          move.l          #GET_KEY_INPUT_D1___R,d1
+0000110A  4E4F                     134          trap            #15
+0000110C  1201                     135          move.b          d1,d1
+0000110E  6600 0004                136          bne             ResetGame
+00001112                           137          
+00001112  67EE                     138          beq             GameOverLoop
+00001114                           139          
+00001114                           140  ResetGame
+00001114                           141                  
+00001114  4E75                     142          rts
+00001116                           143          
+00001116                           144  
+00001116                           145  GetDeltaTime
+00001116  7008                     146          move.l          #GET_TIME_SINCE_MIDNIGHT,d0
+00001118  4E4F                     147          trap            #15
+0000111A  92B9 0000122E            148          sub.l           (OldTime),d1
+00001120  23C1 0000122A            149          move.l          d1,(DeltaTime)
+00001126  4E4F                     150          trap            #15
+00001128  23C1 0000122E            151          move.l          d1,(OldTime)
+0000112E  4E75                     152          rts
+00001130                           153  
+00001130                           154  DrawBackgroundBitmap: ;a0-address, d0-x piece d1-y piece d2-piece width d3-piece height d4-draw x location d5-draw y location
+00001130                           155          
+00001130  2F08                     156          move.l          a0, -(sp)
+00001132  2F00                     157          move.l          d0, -(sp)
+00001134  2F01                     158          move.l          d1, -(sp)
+00001136  2F02                     159          move.l          d2, -(sp)
+00001138  2F03                     160          move.l          d3, -(sp)
+0000113A  2F04                     161          move.l          d4, -(sp)
+0000113C  2F05                     162          move.l          d5, -(sp)
+0000113E                           163  
+0000113E  4EB9 0000224C            164          jsr             DrawBitmap
+00001144                           165          
+00001144  DFFC 0000001C            166          add.l           #28, sp
+0000114A  4E75                     167          rts
+0000114C                           168          
+0000114C                           169  UpdateGameObjects
+0000114C  4EB9 00001384            170          jsr             CalculateTimeLeft
+00001152  4EB9 00001D8A            171          jsr             UpdatePlayer
+00001158  4EB9 000015CC            172          jsr             UpdateBoss
+0000115E  4EB9 00001F52            173          jsr             UpdateBullets
+00001164  4EB9 00001C40            174          jsr             UpdateBossBullets
+0000116A                           175  
+0000116A  4E75                     176          rts
+0000116C                           177          
+0000116C                           178  DrawGameObjects
+0000116C  4EB9 00001264            179          jsr             DrawTimeLeft
+00001172  4EB9 00001EBA            180          jsr             DrawPlayer
+00001178  4EB9 00002122            181          jsr             DrawBullets
+0000117E  4EB9 0000164A            182          jsr             DrawBoss
+00001184  4EB9 00001CA4            183          jsr             DrawBossBullets 
+0000118A                           184          
+0000118A  4E75                     185          rts
+0000118C                           186          
+0000118C                           187  ClearScreen
+0000118C                           188          
+0000118C                           189          ;jsr             ErasePlayer
+0000118C                           190          ;jsr             EraseBullets
+0000118C                           191          ;jsr             EraseBoss
+0000118C                           192          ;jsr             EraseBossBullets
+0000118C  4EB9 0000135A            193          jsr             ClearSegments
+00001192                           194          
+00001192  7200                     195          move.l          #Black,d1
+00001194                           196          
+00001194  7050                     197          move.l          #SET_PEN_COLOR_COMMAND,d0
+00001196  4E4F                     198          trap            #15
+00001198  7051                     199          move.l          #SET_FILL_COLOR_COMMAND,d0
+0000119A  4E4F                     200          trap            #15
+0000119C                           201  
+0000119C  103C 0057                202          move.b          #DRAW_RECT_COMMAND,d0
+000011A0  721E                     203          move.l          #BLACK_BOX_LEFT_SIDE_OF_SCREEN,d1
+000011A2  742D                     204          move.l          #BLACK_BOX_TOP_SIDE_OF_SCREEN,d2
+000011A4  263C 00000262            205          move.l          #BLACK_BOX_RIGHT_SIDE_OF_SCREEN,d3
+000011AA  283C 00000190            206          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d4
+000011B0  4E4F                     207          trap            #15
+000011B2                           208          
+000011B2  4EB9 000011C2            209          jsr             DrawDroppers
+000011B8                           210                 
+000011B8  4E75                     211          rts
+000011BA                           212  
+000011BA                           213  swapBuffers
+000011BA  103C 005E                214          move.b          #REPAINT_SCREEN_TRAP_CODE,d0
+000011BE  4E4F                     215          TRAP            #15
+000011C0  4E75                     216          rts 
+000011C2                           217  
+000011C2                           218  DrawDroppers
+000011C2  41F9 0000240C            219          lea.l           Dropper,a0
+000011C8  7000                     220          move.l          #0, d0
+000011CA  7200                     221          move.l          #0, d1
+Line 222 ERROR: Undefined symbol
+000011CC  243C 004DBB8E            222          move.l          #DROPPER_WIDTH, d2
+Line 223 ERROR: Undefined symbol
+000011D2  263C 004DBB8E            223          move.l          #DROPPER_HEIGHT, d3
+Line 224 ERROR: Undefined symbol
+000011D8  283C 004DBB8E            224          move.l          #DROPPER_ONE_X, d4
+Line 225 ERROR: Undefined symbol
+000011DE  2A3C 004DBB8E            225          move.l          #DROPPER_Y, d5
+000011E4                           226          
+000011E4  2F08                     227          move.l          a0, -(sp)
+000011E6  2F00                     228          move.l          d0, -(sp)
+000011E8  2F01                     229          move.l          d1, -(sp)
+000011EA  2F02                     230          move.l          d2, -(sp)
+000011EC  2F03                     231          move.l          d3, -(sp)
+000011EE  2F04                     232          move.l          d4, -(sp)
+000011F0  2F05                     233          move.l          d5, -(sp)
+000011F2                           234  
+000011F2  4EB9 0000224C            235          jsr             DrawBitmap
+000011F8                           236          
+Line 237 ERROR: Undefined symbol
+000011F8  2F7C 004DBB8E 0004       237          move.l          #DROPPER_TWO_X,4(sp)
+00001200                           238  
+00001200  4EB9 0000224C            239          jsr             DrawBitmap
+00001206                           240  
+Line 241 ERROR: Undefined symbol
+00001206  2F7C 004DBB8E 0004       241          move.l          #DROPPER_THREE_X,4(sp)
+0000120E                           242  
+0000120E  4EB9 0000224C            243          jsr             DrawBitmap
+00001214                           244          
+Line 245 ERROR: Undefined symbol
+00001214  2F7C 004DBB8E 0004       245          move.l          #DROPPER_FOUR_X,4(sp)
+0000121C                           246  
+0000121C  4EB9 0000224C            247          jsr             DrawBitmap
+00001222                           248          
+00001222  DFFC 0000001C            249          add.l           #28, sp    
+00001228                           250          
+00001228  4E75                     251          rts
+0000122A                           252  
+0000122A                           253  DeltaTime               ds.l 1
+0000122E                           254  OldTime                 ds.l 1
+00001232                           255  EndTime                 ds.l 1
+00001236                           256  TimeLeft                ds.l 1
+0000123A                           257  
+0000123A= 59 4F 55 20 57 49 ...    258  GameOverBossKilled      dc.b 'YOU WIN',0
+00001242= 59 4F 55 20 4C 4F ...    259  GameOverPlayerKilled    dc.b 'YOU LOSS',0
+0000124B= 59 4F 55 20 52 41 ...    260  GameOverTimeRanOut      dc.b 'YOU RAN OUT OF TIME',0
+00001260                           261  EmptyLong               ds.l 1
+00001264                           262  
+00001264                           263          INCLUDE "SevenSegmentDisplay.X68"
+00001264                           264  
+00001264  =0000024E                265  START_X_TIME_LEFT           EQU RIGHT_SIDE_OF_SCREEN-20
+00001264  =0000003C                266  START_Y_TIME_LEFT           EQU 60
+00001264  =0000000C                267  X_SEGMENT_OFFSET            EQU 12
+00001264                           268  
+00001264                           269  DrawTimeLeft
+00001264                           270  
+00001264  7A00                     271          moveq.l         #0,d5
+00001266                           272  
+00001266  2C3C 0000024E            273          move.l          #START_X_TIME_LEFT,d6
+0000126C  7E3C                     274          move.l          #START_Y_TIME_LEFT,d7
+0000126E                           275          
+0000126E  2038 1236                276          move.l          (TimeLeft),d0
+00001272  80FC 000A                277          divu            #10,d0
+00001276  4840                     278          swap            d0
+00001278  3A00                     279          move.w          d0,d5
+0000127A  4240                     280          clr.w           d0
+0000127C  4840                     281          swap            d0
+0000127E                           282  
+0000127E  2F05                     283          move.l          d5,-(sp)
+00001280  2F00                     284          move.l          d0,-(sp)
+00001282  4EB9 000012C2            285          jsr             DrawSegment   
+00001288  201F                     286          move.l          (sp)+,d0  
+0000128A  2A1F                     287          move.l          (sp)+,d5
+0000128C                           288          
+0000128C  0486 0000000C            289          sub.l           #X_SEGMENT_OFFSET,d6
+00001292                           290          
+00001292  80FC 000A                291          divu            #10,d0
+00001296  4840                     292          swap            d0
+00001298  3A00                     293          move.w          d0,d5
+0000129A  4240                     294          clr.w           d0
+0000129C  4840                     295          swap            d0
+0000129E                           296  
+0000129E  2F05                     297          move.l          d5,-(sp)
+000012A0  2F00                     298          move.l          d0,-(sp)
+000012A2  4EB9 000012C2            299          jsr             DrawSegment   
+000012A8  201F                     300          move.l          (sp)+,d0  
+000012AA  2A1F                     301          move.l          (sp)+,d5
+000012AC                           302          
+000012AC  0486 0000000C            303          sub.l           #X_SEGMENT_OFFSET,d6
+000012B2                           304          
+000012B2  80FC 000A                305          divu            #10,d0
+000012B6  4840                     306          swap            d0
+000012B8  3A00                     307          move.w          d0,d5
+000012BA                           308          
+000012BA  4EB9 000012C2            309          jsr             DrawSegment
+000012C0                           310  
+000012C0  4E75                     311          rts
+000012C2                           312  
+000012C2                           313  DrawSegment     ;d5-num to draw d6-x d7-y
+000012C2                           314  
+000012C2  7200                     315          moveq.l         #0,d1
+000012C4  7400                     316          moveq.l         #0,d2
+000012C6  7600                     317          moveq.l         #0,d3
+000012C8  7800                     318          moveq.l         #0,d4
+000012CA                           319  
+000012CA  7000                     320          moveq.l         #0,d0
+000012CC  41F9 0000139C            321          lea             SegmentBits,a0
+000012D2  43F9 000013A6            322          lea             SegmentXStart,a1
+000012D8  45F9 000013AD            323          lea             SegmentYStart,a2
+000012DE  47F9 000013B4            324          lea             SegmentXEnd,a3
+000012E4  49F9 000013BB            325          lea             SegmentYEnd,a4
+000012EA                           326  
+000012EA  1A30 5000                327          move.b          (a0,d5),d5
+000012EE                           328                  
+000012EE                           329  FindActiveSegmentsLoop
+000012EE  0105                     330          btst            d0,d5
+000012F0  6600 0010                331          bne             ActiveSegmentFound
+000012F4  5200                     332          add.b           #1,d0
+000012F6  B03C 0007                333          cmp.b           #7,d0
+000012FA  6E00 001E                334          bgt             AllSegmentsUpdated
+000012FE  4EF8 12EE                335          jmp             FindActiveSegmentsLoop
+00001302                           336  
+00001302                           337  ActiveSegmentFound
+00001302  2F00                     338          move.l          d0,-(sp)
+00001304  4EB9 0000131C            339          jsr             DrawActiveSegment
+0000130A  201F                     340          move.l          (sp)+,d0
+0000130C  5200                     341          add.b           #1,d0
+0000130E  B03C 0007                342          cmp.b           #7,d0
+00001312  6E00 0006                343          bgt             AllSegmentsUpdated
+00001316  4EF8 12EE                344          jmp             FindActiveSegmentsLoop
+0000131A                           345  
+0000131A                           346  AllSegmentsUpdated
+0000131A  4E75                     347          rts
+0000131C                           348          
+0000131C                           349  DrawActiveSegment
+0000131C                           350  
+0000131C  223C 00FFFFFF            351          move.l          #WHITE,d1
+00001322  103C 0050                352              move.b              #SET_PEN_COLOR_COMMAND,d0
+00001326  4E4F                     353              trap                #15
+00001328  103C 0051                354              move.b              #SET_FILL_COLOR_COMMAND,d0
+0000132C  4E4F                     355              trap                #15
+0000132E                           356              
+0000132E                           357  
+0000132E  7200                     358          moveq.l         #0,d1
+00001330  7400                     359          moveq.l         #0,d2   
+00001332  7600                     360          moveq.l         #0,d3
+00001334  7800                     361          moveq.l         #0,d4
+00001336                           362  
+00001336  2206                     363          move.l          d6,d1
+00001338  2407                     364          move.l          d7,d2
+0000133A  2606                     365          move.l          d6,d3
+0000133C  2807                     366          move.l          d7,d4        
+0000133E                           367  
+0000133E  202F 0004                368          move.l          4(sp),d0
+00001342                           369  
+00001342  D231 0000                370          add.b           (a1,d0),d1
+00001346  D432 0000                371          add.b           (a2,d0),d2
+0000134A  D633 0000                372          add.b           (a3,d0),d3
+0000134E  D834 0000                373          add.b           (a4,d0),d4
+00001352                           374          
+00001352  103C 0057                375          move.b          #DRAW_RECT_COMMAND,d0
+00001356  4E4F                     376          trap            #15
+00001358                           377          
+00001358  4E75                     378          rts
+0000135A                           379          
+0000135A                           380  ClearSegments
+0000135A                           381  
+0000135A  223C 00FF0000            382          move.l          #$00FF0000,d1
+00001360  103C 0050                383              move.b              #SET_PEN_COLOR_COMMAND,d0
+00001364  4E4F                     384              trap                #15
+00001366  103C 0051                385              move.b              #SET_FILL_COLOR_COMMAND,d0
+0000136A  4E4F                     386              trap                #15
+0000136C                           387              
+0000136C  103C 0057                388              move.b              #DRAW_RECT_COMMAND,d0
+00001370                           389  
+00001370  223C 0000022F            390          move.l          #START_X_TIME_LEFT-3*X_SEGMENT_OFFSET+5,d1
+00001376  743C                     391          move.l          #START_Y_TIME_LEFT,d2
+00001378  263C 00000257            392          move.l          #START_X_TIME_LEFT-3*X_SEGMENT_OFFSET+5+40,d3
+0000137E  7848                     393          move.l          #START_Y_TIME_LEFT+12,d4
+00001380                           394          
+00001380  4E4F                     395          trap            #15
+00001382                           396          
+00001382  4E75                     397          rts
+00001384                           398          
+00001384                           399  CalculateTimeLeft
+00001384                           400           
+00001384  2038 1232                401          move.l          (EndTime),d0
+00001388  90B8 122E                402          sub.l           (OldTime),d0
+0000138C  80FC 0064                403          divu            #100,d0
+00001390  4840                     404          swap            d0
+00001392  4240                     405          clr.w           d0
+00001394  4840                     406          swap            d0
+00001396  21C0 1236                407          move.l          d0,(TimeLeft)
+0000139A                           408  
+0000139A  4E75                     409          rts       
+0000139C                           410          
+0000139C= 3F 06 5B 4F 66 6D ...    411  SegmentBits         dc.b $3F,$06,$5B,$4f,$66,$6D,$7D,$07,$7F,$67
+000013A6                           412  
+000013A6= FC 05 05 04 FB FB FC     413  SegmentXStart       dc.b -4,5,5,4,-5,-5,-4
+000013AD= FB FF 04 05 01 FC 00     414  SegmentYStart       dc.b -5,-1,4,5,1,-4,0
+000013B4                           415  
+000013B4= 04 05 05 FC FB FB 04     416  SegmentXEnd         dc.b 4,5,5,-4,-5,-5,4
+000013BB= FB FC 01 05 04 FF 00     417  SegmentYEnd         dc.b -5,-4,1,5,4,-1,0
+000013C2                           418  
+000013C2                           419  
+000013C2                           420  
+000013C2                           421  
+000013C2                           422  
+000013C2                           423  
+000013C2                           424  
+000013C2                           425  -------------------- end include --------------------
+000013C2                           426          INCLUDE "Collisions.x68"
+000013C2                           427  
+000013C2  =000000FF                428  BOSS_START_HEALTH               EQU 255
+000013C2  =000000FF                429  PLAYER_START_HEALTH             EQU 255
+000013C2                           430  
+000013C2  =0000000F                431  BOSS_SHOOT_DAMAGE               EQU 15
+000013C2  =00000019                432  BOSS_JUMP_DAMAGE                EQU 25
+000013C2                           433  
+000013C2  =0000000A                434  PLAYER_BULLET_DAMAGE            EQU 10
+000013C2  =00000096                435  PLAYER_INVULNERABILITY_TIME     EQU 150 
+000013C2                           436          
+000013C2                           437  CheckCollision
+000013C2                           438  
+000013C2  4EB9 0000145C            439          jsr             CheckPlayerBullet
+000013C8  4EB9 000013D6            440          jsr             CheckPlayerAndBossCollision
+000013CE  4EB9 00001512            441          jsr             CheckBossBullets
+000013D4                           442  
+000013D4  4E75                     443          rts
+000013D6                           444          
+000013D6                           445  CheckPlayerAndBossCollision
+000013D6                           446  
+000013D6  2038 122E                447          move.l          (OldTime),d0
+000013DA                           448  
+000013DA  B0B9 000015C8            449          cmp.l           (PlayerVulnerabilityTime),d0
+000013E0  6D00 0078                450          blt             BossDidNotCollide
+000013E4                           451  
+000013E4  4DF9 00001F2A            452          lea             PlayerPositionAndSize,a6
+000013EA  4BF9 0000192A            453          lea             BossPositionAndSize,a5
+000013F0                           454          
+000013F0  2216                     455          move.l          (a6),d1
+000013F2  242E 0004                456          move.l          4(a6),d2
+000013F6                           457          
+000013F6  262D 0004                458          move.l          4(a5),d3
+000013FA  0483 00001400            459          sub.l           #PLAYER_HEIGHT<<8,d3
+00001400                           460          
+00001400  B682                     461          cmp.l           d2,d3
+00001402  6E00 0056                462          bgt             BossDidNotCollide
+00001406  0683 00003C00            463          add.l           #PLAYER_HEIGHT<<8+BOSS_HEIGHT<<8,d3
+0000140C  B682                     464          cmp.l           d2,d3
+0000140E  6D00 004A                465          blt             BossDidNotCollide
+00001412  2615                     466          move.l          (a5),d3
+00001414  0483 00001400            467          sub.l           #PLAYER_WIDTH<<8,d3
+0000141A  B681                     468          cmp.l           d1,d3
+0000141C  6E00 003C                469          bgt             BossDidNotCollide
+00001420  0683 00003C00            470          add.l           #PLAYER_WIDTH<<8+BOSS_WIDTH<<8,d3
+00001426  B681                     471          cmp.l           d1,d3
+00001428  6D00 0030                472          blt             BossDidNotCollide
+0000142C                           473          
+0000142C  0680 00000096            474          add.l           #PLAYER_INVULNERABILITY_TIME,d0
+00001432  23C0 000015C8            475          move.l          d0,(PlayerVulnerabilityTime)
+00001438  04B9 00000019 000015C4   476          sub.l           #BOSS_JUMP_DAMAGE,(PlayerHealth)
+00001442                           477  
+00001442  2839 000015C4            478          move.l          (PlayerHealth),d4
+00001448                           479  
+00001448  2604                     480          move.l          d4,d3
+0000144A  4843                     481          swap            d3
+0000144C  1604                     482          move.b          d4,d3
+0000144E  E14B                     483          lsl.w           #8,d3
+00001450  1604                     484          move.b          d4,d3
+00001452                           485  
+00001452  23C3 00001F4E            486          move.l          d3,(PlayerColor)
+00001458                           487  
+00001458  4E75                     488          rts
+0000145A                           489  BossDidNotCollide
+0000145A                           490          
+0000145A  4E75                     491          rts
+0000145C                           492  
+0000145C                           493  CheckPlayerBullet
+0000145C                           494          
+0000145C  7000                     495          move.l          #0,d0
+0000145E  4DF9 00002222            496          lea             BulletOnePosition,a6
+00001464                           497          
+00001464                           498  CheckPlayerBulletLoop
+00001464  0139 00002221            499          btst            d0,(ActiveBullets)
+0000146A  6600 0016                500          bne             CheckActiveBullet
+0000146E  5200                     501          add.b           #1,d0
+00001470  DDFC 00000012            502          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001476  B03C 0003                503          cmp.b           #MAX_ALLOWED_BULLETS,d0
+0000147A  6E00 0020                504          bgt             AllPlayerBulletChecked
+0000147E  4EF8 1464                505          jmp             CheckPlayerBulletLoop
+00001482                           506  
+00001482                           507  CheckActiveBullet
+00001482                           508  
+00001482  4EB9 0000149E            509          jsr             CheckPlayerBulletCollisionAtA6
+00001488  5200                     510          add.b           #1,d0
+0000148A  DDFC 00000012            511          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001490  B03C 0003                512          cmp.b           #MAX_ALLOWED_BULLETS,d0
+00001494  6E00 0006                513          bgt             AllPlayerBulletChecked
+00001498  4EF8 1464                514          jmp             CheckPlayerBulletLoop
+0000149C                           515  
+0000149C                           516  AllPlayerBulletChecked
+0000149C                           517              
+0000149C  4E75                     518          rts
+0000149E                           519          
+0000149E                           520  CheckPlayerBulletCollisionAtA6
+0000149E                           521          
+0000149E  2216                     522          move.l          (a6),d1
+000014A0  242E 0004                523          move.l          4(a6),d2
+000014A4                           524          
+000014A4  4BF9 0000192A            525          lea             BossPositionAndSize,a5
+000014AA                           526          
+000014AA  262D 0004                527          move.l          4(a5),d3
+000014AE  0483 00000A00            528          sub.l           #BULLET_SIZE_HEIGHT<<8,d3
+000014B4                           529          
+000014B4  B682                     530          cmp.l           d2,d3
+000014B6  6E00 0058                531          bgt             BulletDidNotCollide
+000014BA  0683 00003200            532          add.l           #BULLET_SIZE_HEIGHT<<8+BOSS_HEIGHT<<8,d3
+000014C0  B682                     533          cmp.l           d2,d3
+000014C2  6D00 004C                534          blt             BulletDidNotCollide
+000014C6  2615                     535          move.l          (a5),d3
+000014C8  0483 00000A00            536          sub.l           #BULLET_SIZE_WIDTH<<8,d3
+000014CE  B681                     537          cmp.l           d1,d3
+000014D0  6E00 003E                538          bgt             BulletDidNotCollide
+000014D4  0683 00003200            539          add.l           #BULLET_SIZE_WIDTH<<8+BOSS_WIDTH<<8,d3
+000014DA  B681                     540          cmp.l           d1,d3
+000014DC  6D00 0032                541          blt             BulletDidNotCollide
+000014E0                           542          
+000014E0  2F00                     543          move.l          d0,-(sp)
+000014E2  4EB9 000021AA            544          jsr             EraseBullets
+000014E8  201F                     545          move.l          (sp)+,d0        
+000014EA                           546          
+000014EA  04B9 0000000A 000015C0   547          sub.l           #PLAYER_BULLET_DAMAGE,(BossHealth)
+000014F4  01B9 00002221            548          bclr            d0,(ActiveBullets)
+000014FA                           549          
+000014FA  2839 000015C0            550          move.l          (BossHealth),d4
+00001500                           551          
+00001500  2604                     552          move.l          d4,d3
+00001502  4843                     553          swap            d3
+00001504  1604                     554          move.b          d4,d3
+00001506  E14B                     555          lsl.w           #8,d3
+00001508  1604                     556          move.b          d4,d3
+0000150A  23C3 00001944            557          move.l          d3,(BossColor)
+00001510                           558          
+00001510                           559  BulletDidNotCollide
+00001510  4E75                     560          rts
+00001512                           561          
+00001512                           562          
+00001512                           563  CheckBossBullets
+00001512                           564  
+00001512  7C00                     565          move.l          #0,d6
+00001514  4DF9 0000194E            566          lea             BossBulletArray,a6
+0000151A                           567          
+0000151A                           568  CheckBossBulletsLoop
+0000151A  0D39 00001949            569          btst            d6,(BossBulletsActive)
+00001520  6600 0016                570          bne             ActiveBossBullet
+00001524  5206                     571          add.b           #1,d6
+00001526  DDFC 00000012            572          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+0000152C  BC3C 0006                573          cmp.b           #BOSS_MAX_BULLETS,d6
+00001530  6E00 0020                574          bgt             AllBossBulletChecked
+00001534  4EF8 151A                575          jmp             CheckBossBulletsLoop
+00001538                           576  
+00001538                           577  ActiveBossBullet
+00001538                           578              
+00001538  4EB9 00001554            579          jsr             CheckBossBulletCollisionAtA6
+0000153E  5206                     580          add.b           #1,d6
+00001540  DDFC 00000012            581          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001546  BC3C 0006                582          cmp.b           #BOSS_MAX_BULLETS,d6
+0000154A  6E00 0006                583          bgt             AllBossBulletChecked
+0000154E  4EF8 151A                584          jmp             CheckBossBulletsLoop
+00001552                           585          
+00001552                           586  AllBossBulletChecked
+00001552                           587              
+00001552  4E75                     588          rts
+00001554                           589          
+00001554                           590  CheckBossBulletCollisionAtA6
+00001554                           591  
+00001554  2216                     592          move.l          (a6),d1
+00001556  242E 0004                593          move.l          4(a6),d2
+0000155A                           594          
+0000155A  4BF9 00001F2A            595          lea             PlayerPositionAndSize,a5
+00001560                           596          
+00001560  262D 0004                597          move.l          4(a5),d3
+00001564  0483 00000A00            598          sub.l           #BOSS_BULLET_HEIGHT<<8,d3
+0000156A                           599          
+0000156A  B682                     600          cmp.l           d2,d3
+0000156C  6E00 0050                601          bgt             BossBulletDidNotCollide
+00001570  0683 00001E00            602          add.l           #BOSS_BULLET_HEIGHT<<8+PLAYER_HEIGHT<<8,d3
+00001576  B682                     603          cmp.l           d2,d3
+00001578  6D00 0044                604          blt             BossBulletDidNotCollide
+0000157C  2615                     605          move.l          (a5),d3
+0000157E  0483 00000A00            606          sub.l           #BOSS_BULLET_WIDTH<<8,d3
+00001584  B681                     607          cmp.l           d1,d3
+00001586  6E00 0036                608          bgt             BossBulletDidNotCollide
+0000158A  0683 00001E00            609          add.l           #BOSS_BULLET_WIDTH<<8+PLAYER_WIDTH<<8,d3
+00001590  B681                     610          cmp.l           d1,d3
+00001592  6D00 002A                611          blt             BossBulletDidNotCollide
+00001596                           612          
+00001596  04B9 0000000F 000015C4   613          sub.l           #BOSS_SHOOT_DAMAGE,(PlayerHealth)
+000015A0                           614          
+000015A0  2839 000015C4            615          move.l          (PlayerHealth),d4
+000015A6                           616  
+000015A6  2604                     617          move.l          d4,d3
+000015A8  4843                     618          swap            d3
+000015AA  1604                     619          move.b          d4,d3
+000015AC  E14B                     620          lsl.w           #8,d3
+000015AE  1604                     621          move.b          d4,d3
+000015B0                           622  
+000015B0  23C3 00001F4E            623          move.l          d3,(PlayerColor)
+000015B6                           624          
+000015B6  0DB9 00001949            625          bclr            d6,(BossBulletsActive)
+000015BC                           626          
+000015BC  4E75                     627          rts
+000015BE                           628  
+000015BE                           629  BossBulletDidNotCollide
+000015BE  4E75                     630          rts
+000015C0                           631          
+000015C0                           632          
+000015C0= 000000FF                 633  BossHealth                  dc.l  BOSS_START_HEALTH
+000015C4= 000000FF                 634  PlayerHealth                dc.l  PLAYER_START_HEALTH
+000015C8= 00000000                 635  PlayerVulnerabilityTime     dc.l  0
+000015CC                           636  
+000015CC                           637  
+000015CC                           638  
+000015CC                           639  
+000015CC                           640  
+000015CC                           641  
+000015CC                           642  
+000015CC                           643  
+000015CC                           644  
+000015CC                           645  
+000015CC                           646  -------------------- end include --------------------
+000015CC                           647          INCLUDE "Boss.x68"
+000015CC                           648  
+000015CC  =00000028                649  BOSS_WIDTH                          EQU 40
+000015CC  =00000028                650  BOSS_HEIGHT                         EQU 40
+000015CC                           651  
+000015CC  =00000800                652  BOSS_VELOCITY_UP                            EQU $800
+000015CC  =00000030                653  BOSS_GRAVITY_SIZE                   EQU $30
+000015CC  =0000002A                654  BOSS_TIME_TO_JUMP_AND_FALL          EQU (BOSS_VELOCITY_UP/BOSS_GRAVITY_SIZE)
+000015CC                           655  
+000015CC  =00FFFF00                656  BOSS_BULLET_COLOR                   EQU $00FFFF00
+000015CC                           657  
+000015CC  =00000300                658  BOSS_BULLET_SPEED                   EQU $300
+000015CC  =00000064                659  BOSS_TIME_BETWEEN_SHOT              EQU 100
+000015CC  =00000003                660  BOSS_BULLET_COUNT_SHOT              EQU 3
+000015CC  =0000000A                661  BOSS_BULLET_WIDTH                   EQU 10
+000015CC  =0000000A                662  BOSS_BULLET_HEIGHT                  EQU 10
+000015CC  =00000019                663  BOSS_SHOT_HEIGHT_OFFSET             EQU 25
+000015CC                           664  
+000015CC  =00000006                665  BOSS_MAX_BULLETS                    EQU 6
+000015CC  =00000004                666  BOSS_MAX_RAIN                       EQU 4
+000015CC  =00000012                667  BOSS_BULLET_DATA_SIZE_IN_BYTES      EQU 18
+000015CC                           668  
+000015CC                           669  
+000015CC                           670  UpdateBoss
+000015CC                           671          
+000015CC  2039 0000192A            672          move.l          (BossPositionAndSize),d0
+000015D2  2239 00001F2A            673          move.l          (PlayerPositionAndSize),d1 
+000015D8  B280                     674          cmp.l           d0,d1
+000015DA  6D00 0010                675          blt             UpdateBossLookLeft        
+000015DE                           676  UpdateBossLookRight        
+000015DE  13FC 0001 00001942       677          move.b          #1,(BossShouldFaceRight)
+000015E6  4EF9 000015F4            678          jmp             UpdateBossLookDone
+000015EC                           679  UpdateBossLookLeft
+000015EC  13FC 0000 00001942       680          move.b          #0,(BossShouldFaceRight)
+000015F4                           681          
+000015F4                           682  UpdateBossLookDone
+000015F4  7000                     683          moveq.l         #0,d0
+000015F6  1039 00001943            684          move.b          (BossState),d0
+000015FC  6700 0018                685          beq             GetNewState
+00001600                           686  
+00001600                           687  CheckBossState        
+00001600  41F9 00001C30            688          lea             UpdateStateTable,a0
+00001606  5980                     689          sub.l           #4,d0
+00001608  2030 0000                690          move.l          (a0,d0),d0
+0000160C  2040                     691          move.l          d0,a0
+0000160E  4E90                     692          jsr             (a0)
+00001610  4EF9 00001632            693          jmp             BossStateUpdateDone
+00001616                           694          
+00001616                           695  GetNewState
+00001616  4EB9 0004F1CA            696          jsr             getRandomLongIntoD6
+0000161C                           697  ;                move.l           #1,d6
+0000161C  CCBC 00000003            698          and.l           #3,d6
+00001622  E58E                     699          lsl.l           #2,d6
+00001624  41F9 00001C20            700          lea             SetStateTable,a0
+0000162A  D1C6                     701          add.l           d6,a0
+0000162C  2C10                     702          move.l          (a0),d6
+0000162E  2046                     703          move.l          d6,a0
+00001630  4E90                     704          jsr             (a0)
+00001632                           705  
+00001632                           706  BossStateUpdateDone
+00001632                           707          
+00001632  2039 0000193E            708          move.l          (BossOnGround),d0  
+00001638  6600 000E                709          bne             BossReachFloor
+0000163C  2038 122A                710          move.l          (DeltaTime),d0
+00001640  C1FC 0040                711          muls            #GRAVITY_SIZE,d0
+00001644  D16E 0012                712          add.w           d0,18(a6)
+00001648                           713  BossReachFloor
+00001648                           714  
+00001648  4E75                     715          rts
+0000164A                           716  
+0000164A                           717  DrawBoss
+0000164A  4DF9 0000192A            718          lea             BossPositionAndSize,a6
+00001650                           719  
+00001650  2238 15C0                720          move.l          (BossHealth),d1
+00001654  6B00 0092                721          bmi             DrawDoneBoss
+00001658                           722  
+00001658  7400                     723          moveq.l         #0,d2
+0000165A  2239 00001944            724          move.l          (BossColor),d1
+00001660  1439 00001943            725          move.b          (BossState),d2
+00001666  6700 001A                726          beq             StateZeroDraw
+0000166A  5902                     727          sub.b           #4,d2
+0000166C  6700 0020                728          beq             StateOneDraw
+00001670  5902                     729          sub.b           #4,d2
+00001672  6700 0026                730          beq             StateTwoDraw
+00001676  5902                     731          sub.b           #4,d2
+00001678  6700 002C                732          beq             StateThreeDraw
+0000167C  5902                     733          sub.b           #4,d2
+0000167E  6700 0026                734          beq             StateThreeDraw
+00001682                           735  StateZeroDraw
+00001682  C2BC 00FFFFFF            736          and.l           #$FFFFFF,d1
+00001688  4EF9 000016BE            737          jmp             ChangeColorDone
+0000168E                           738  StateOneDraw
+0000168E  C2BC 00FF0000            739          and.l           #$FF0000,d1       
+00001694  4EF9 000016BE            740          jmp             ChangeColorDone
+0000169A                           741  StateTwoDraw
+0000169A  C2BC 0000FF00            742          and.l           #$00FF00,d1
+000016A0  4EF9 000016BE            743          jmp             ChangeColorDone
+000016A6                           744  StateThreeDraw
+000016A6  C2BC 000000FF            745          and.l           #$0000FF,d1
+000016AC  4EF9 000016BE            746          jmp             ChangeColorDone
+000016B2                           747  StateFourDraw
+000016B2  C2BC 00FF00FF            748          and.l           #$FF00FF,d1
+000016B8  4EF9 000016BE            749          jmp             ChangeColorDone
+000016BE                           750  ChangeColorDone
+000016BE                           751  
+000016BE  7050                     752              move.l          #SET_PEN_COLOR_COMMAND,d0
+000016C0  4E4F                     753          trap            #15
+000016C2  7051                     754              move.l          #SET_FILL_COLOR_COMMAND,d0
+000016C4  4E4F                     755              trap                #15
+000016C6                           756  
+000016C6  103C 0058                757              move.b              #DRAW_CIRCLE_COMMAND,d0
+000016CA  2216                     758              move.l          (a6),d1 
+000016CC  E089                     759              lsr.l           #8,d1
+000016CE  242E 0004                760              move.l          4(a6),d2
+000016D2  E08A                     761              lsr.l           #8,d2
+000016D4  262E 0008                762              move.l          8(a6),d3
+000016D8  D696                     763              add.l           (a6),d3
+000016DA  E08B                     764              lsr.l           #8,d3
+000016DC  282E 000C                765              move.l          12(a6),d4
+000016E0  D8AE 0004                766              add.l           4(a6),d4
+000016E4  E08C                     767              lsr.l           #8,d4       
+000016E6  4E4F                     768              trap                #15
+000016E8                           769  
+000016E8                           770  DrawDoneBoss
+000016E8  4E75                     771              rts
+000016EA                           772          
+000016EA                           773  EraseBoss: ;a6 memory location of x,y,w,h,v_x,v_y
+000016EA                           774         
+000016EA  4DF9 0000192A            775          lea             BossPositionAndSize,a6
+000016F0  2016                     776          move.l          (a6),d0
+000016F2  E088                     777          lsr.l           #8,d0
+000016F4  5380                     778          sub.l           #1,d0
+000016F6  222E 0004                779          move.l          4(a6),d1
+000016FA  E089                     780          lsr.l           #8,d1
+000016FC  0481 FFFFFFFF            781          sub.l           #-1,d1
+00001702  242E 0008                782          move.l          8(a6),d2
+00001706  E08A                     783          lsr.l           #8,d2
+00001708  41F9 00002518            784          lea.l           Bitmap, a0
+0000170E  2000                     785          move.l          d0,d0
+00001710  2201                     786          move.l          d1,d1
+00001712  2602                     787          move.l          d2,d3
+00001714  5482                     788          add.l           #2,d2
+00001716  2402                     789          move.l          d2,d2
+00001718  2800                     790          move.l          d0,d4
+0000171A  2A01                     791          move.l          d1,d5
+0000171C                           792          
+0000171C  4EB8 1130                793          jsr DrawBackgroundBitmap
+00001720                           794          
+00001720  4E75                     795          rts
+00001722                           796  
+00001722                           797  SetStateOne
+00001722  13FC 0003 00001948       798          move.b          #BOSS_BULLET_COUNT_SHOT,(BossBulletsLeftToShoot)
+0000172A  2E38 122E                799          move.l          (OldTime),d7
+0000172E  23C7 0000194A            800          move.l          d7,(BossTimeToShoot)
+00001734                           801                  
+00001734  13FC 0004 00001943       802          move.b          #4,(BossState)
+0000173C  4E75                     803          rts
+0000173E                           804  SetStateTwo
+0000173E                           805  
+0000173E  41F9 00001F2A            806          lea             PlayerPositionAndSize,a0
+00001744                           807  
+00001744  2010                     808          move.l          (a0),d0
+00001746  2228 0008                809          move.l          8(a0),d1
+0000174A  E281                     810          asr.l           #1,d1
+0000174C  D081                     811          add.l           d1,d0
+0000174E  41F9 0000192A            812          lea             BossPositionAndSize,a0
+00001754  2210                     813          move.l          (a0),d1
+00001756                           814          
+00001756  1439 00001942            815          move.b          (BossShouldFaceRight),d2
+0000175C  6606                     816          bne.b           SetStateTwoFaceRight
+0000175E                           817  SetStateTwoFaceLeft
+0000175E  4EF9 00001768            818          jmp             SetStateTwoOffset
+00001764                           819  SetStateTwoFaceRight
+00001764  D2A8 0008                820          add.l           8(a0),d1
+00001768                           821  SetStateTwoOffset
+00001768                           822          
+00001768  9280                     823          sub.l           d0,d1
+0000176A  2001                     824          move.l          d1,d0
+0000176C  E280                     825          asr.l           #1,d0
+0000176E  D280                     826          add.l           d0,d1
+00001770  83FC FFD6                827          divs            #-BOSS_TIME_TO_JUMP_AND_FALL,d1    
+00001774  E241                     828          asr.w           #1,d1
+00001776  33C1 0000193A            829          move.w          d1,(BossVelocityX)
+0000177C                           830        
+0000177C  33FC F800 0000193C       831          move.w          #-BOSS_VELOCITY_UP,(BossVelocityY)
+00001784                           832  
+00001784  13FC 0008 00001943       833          move.b          #8,(BossState)
+0000178C                           834          
+0000178C  4EB9 00001896            835          jsr             UpdateStateTwo
+00001792                           836          
+00001792  4E75                     837          rts 
+00001794                           838  SetStateThree
+00001794                           839  
+00001794  7000                     840          moveq.l         #0,d0
+00001796  1039 00001AFF            841          move.b          (BossRainActive),d0
+Line 842 ERROR: Undefined symbol
+0000179C  6600 A3F0                842          bne             FinishStateThree 
+000017A0                           843  
+000017A0  08F9 0000 00001AFF       844          bset            #0,(BossRainActive)
+000017A8  08F9 0001 00001AFF       845          bset            #1,(BossRainActive)
+000017B0  08F9 0002 00001AFF       846          bset            #2,(BossRainActive)
+000017B8  08F9 0003 00001AFF       847          bset            #3,(BossRainActive)
+000017C0                           848  
+Line 849 ERROR: Invalid syntax
+000017C0                           849          move.l          DROPPER_Y+DROPPER_HEIGHT,d0
+000017C0                           850  
+Line 851 ERROR: Invalid syntax
+000017C0                           851          move.l          DROPPER_ONE_X+DROPPER_WIDTH/2,(BossRainArray)
+Line 852 ERROR: Invalid syntax
+000017C0                           852          move.l          DROPPER_TWO_X+DROPPER_WIDTH/2,18(BossRainArray)
+Line 853 ERROR: Invalid syntax
+000017C0                           853          move.l          DROPPER_TWO_X+DROPPER_WIDTH/2,36(BossRainArray)
+Line 854 ERROR: Invalid syntax
+000017C0                           854          move.l          DROPPER_TWO_X+DROPPER_WIDTH/2,52(BossRainArray)        
+000017C0                           855  
+000017C0  13FC 000C 00001943       856          move.b          #12,(BossState)
+000017C8  4E75                     857          rts
+Line 858 ERROR: Symbol value differs between first and second pass
+000017CA                           858  SetStateFour
+000017CA                           859  
+000017CA  13FC 0010 00001943       860          move.b          #16,(BossState)
+000017D2  4E75                     861          rts
+000017D4                           862  
+Line 863 ERROR: Symbol value differs between first and second pass
+000017D4                           863  UpdateStateOne
+000017D4                           864  
+000017D4  41F9 00001948            865          lea             BossBulletsLeftToShoot,a0
+000017DA  7000                     866          moveq.l         #0,d0
+000017DC  1010                     867          move.b          (a0),d0
+000017DE  6700 00AC                868          beq             FinsihedStateOne    
+000017E2                           869      
+000017E2  2E38 122E                870          move.l          (OldTime),d7
+000017E6  2C39 0000194A            871          move.l          (BossTimeToShoot),d6
+000017EC  BE86                     872          cmp.l           d6,d7
+000017EE  6D00 009A                873          blt             BossShootBulletDone
+000017F2                           874      
+000017F2  5300                     875          sub.b           #1,d0
+000017F4  1080                     876          move.b          d0,(a0)
+000017F6                           877      
+000017F6  7000                     878          move.l          #0,d0
+000017F8                           879          
+Line 880 ERROR: Symbol value differs between first and second pass
+000017F8                           880  FindOpenBossBulletLoop
+000017F8  0139 00001949            881          btst            d0,(BossBulletsActive)
+000017FE  6700 0020                882          beq             BossBulletFound
+00001802  5200                     883          add.b           #1,d0
+00001804  B03C 0006                884          cmp.b           #BOSS_MAX_BULLETS,d0
+00001808  6E00 0082                885          bgt             FinsihedStateOne
+0000180C  4EF8 1808                886          jmp             FindOpenBossBulletLoop
+00001810                           887  
+Line 888 ERROR: Symbol value differs between first and second pass
+00001810                           888  BossBulletFound
+00001810                           889  
+00001810  01F9 00001949            890          bset            d0,(BossBulletsActive)
+00001816                           891  
+00001816  C0FC 0012                892          mulu            #BOSS_BULLET_DATA_SIZE_IN_BYTES,d0
+0000181A  41F9 0000194E            893          lea             BossBulletArray,a0
+00001820  D1C0                     894          add.l           d0,a0
+00001822                           895          
+00001822  43F9 0000192A            896          lea             BossPositionAndSize,a1     
+00001828  1039 00001942            897          move.b          (BossShouldFaceRight),d0
+0000182E  6600 002E                898          bne             BossShootRight
+Line 899 ERROR: Symbol value differs between first and second pass
+00001832                           899  BossShootLeft
+00001832  2091                     900          move.l          (a1),(a0)
+00001834  2429 0004                901          move.l          4(a1),d2
+00001838  0682 00001900            902          add.l           #BOSS_SHOT_HEIGHT_OFFSET<<8,d2
+0000183E  2142 0004                903          move.l          d2,4(a0)   
+00001842  317C FD00 0008           904          move.w          #-BOSS_BULLET_SPEED,8(a0)
+00001848  4EF9 0000187A            905          jmp             BossShotDone
+Line 906 ERROR: Symbol value differs between first and second pass
+0000184E                           906  BossShootRight
+0000184E  2411                     907          move.l          (a1),d2
+00001850  D4A9 0008                908          add.l           8(a1),d2
+00001854  2082                     909          move.l          d2,(a0)
+00001856  2429 0004                910          move.l          4(a1),d2
+0000185A  0682 00001900            911          add.l           #BOSS_SHOT_HEIGHT_OFFSET<<8,d2
+00001860  2142 0004                912          move.l          d2,4(a0)   
+00001864  317C 0300 0008           913          move.w          #BOSS_BULLET_SPEED,8(a0)
+Line 914 ERROR: Symbol value differs between first and second pass
+0000186A                           914  BossShotDone
+0000186A  2038 122E                915          move.l          (OldTime),d0
+0000186E  0680 00000064            916          add.l           #BOSS_TIME_BETWEEN_SHOT,d0
+00001874  23C0 0000194A            917          move.l          d0,(BossTimeToShoot)
+Line 918 ERROR: Symbol value differs between first and second pass
+0000187A                           918  BossShootBulletDone
+0000187A  4E75                     919          rts
+0000187C                           920          
+Line 921 ERROR: Symbol value differs between first and second pass
+0000187C                           921  FinsihedStateOne    
+0000187C  13FC 0000 00001943       922          move.b          #0,(BossState)
+00001884  4E75                     923          rts
+00001886                           924          
+Line 925 ERROR: Symbol value differs between first and second pass
+00001886                           925  UpdateStateTwo
+00001886  4DF9 0000192A            926          lea             BossPositionAndSize,a6
+0000188C                           927          
+0000188C  2038 122A                928          move.l          (DeltaTime),d0
+00001890  C1EE 0010                929          muls            16(a6),d0
+00001894  D096                     930          add.l           (a6),d0
+00001896  B0BC 00001E00            931          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+0000189C  6F00 0024                932          ble             BossReachLeftSide
+000018A0  B0BC 00023A00            933          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BOSS_WIDTH<<8,d0
+000018A6  6E00 0026                934          bgt             BossReachRightSide
+000018AA  2C80                     935          move.l          d0,(a6)
+000018AC  4EF9 000018D4            936          jmp             FinishUpdatingBossX
+Line 937 ERROR: Symbol value differs between first and second pass
+000018B2                           937  BossReachLeftSide
+000018B2  2CBC 00001E00            938          move.l          #LEFT_SIDE_OF_SCREEN<<8,(a6)
+000018B8  4EF9 000018D4            939          jmp             FinishUpdatingBossX
+Line 940 ERROR: Symbol value differs between first and second pass
+000018BE                           940  BossReachRightSide
+000018BE  2CBC 00023A00            941          move.l          #RIGHT_SIDE_OF_SCREEN<<8-BOSS_WIDTH<<8,(a6)
+Line 942 ERROR: Symbol value differs between first and second pass
+000018C4                           942  FinishUpdatingBossX
+000018C4                           943                 
+000018C4  2038 122A                944          move.l          (DeltaTime),d0
+000018C8  C1EE 0012                945          muls            18(a6),d0
+000018CC  D0AE 0004                946          add.l           4(a6),d0
+000018D0  B0BC 00016800            947          cmp.l           #BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8,d0
+000018D6  6E00 0022                948          bgt             BossReachBottomUpdate
+000018DA  2D40 0004                949          move.l          d0,4(a6)
+000018DE  23FC 00000000 0000193E   950          move.l          #0,(BossOnGround)
+000018E8  4E75                     951          rts
+Line 952 ERROR: Symbol value differs between first and second pass
+000018EA                           952  BossReachBottomUpdate
+000018EA  2D7C 00016800 0004       953          move.l          #BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8,4(a6)
+000018F2  23FC 00000001 0000193E   954          move.l          #1,(BossOnGround)
+000018FC  13FC 0000 00001943       955          move.b          #0,(BossState)
+00001904  4E75                     956          rts
+00001906                           957  
+Line 958 ERROR: Symbol value differs between first and second pass
+00001906                           958  UpdateStateThree
+00001906                           959  
+00001906                           960  
+00001906  13FC 0000 00001943       961          move.b          #0,(BossState)
+0000190E  4E75                     962          rts
+Line 963 ERROR: Symbol value differs between first and second pass
+00001910                           963  UpdateStateFour
+00001910  13FC 0000 00001943       964          move.b          #0,(BossState)
+00001918  4E75                     965          rts
+0000191A                           966          
+0000191A                           967          
+Line 968 ERROR: Symbol value differs between first and second pass
+0000191A=                          968  BossPositionAndSize         dc.l 400<<8,BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8-1<<8,BOSS_WIDTH<<8,BOSS_HEIGHT<<8
+Line 969 ERROR: Symbol value differs between first and second pass
+0000191A=                          969  BossVelocityX               dc.w 0
+Line 970 ERROR: Symbol value differs between first and second pass
+0000191A=                          970  BossVelocityY               dc.w 0
+Line 971 ERROR: Symbol value differs between first and second pass
+0000191A=                          971  BossOnGround                dc.l 0
+Line 972 ERROR: Symbol value differs between first and second pass
+0000191A=                          972  BossShouldFaceRight         dc.b 0
+Line 973 ERROR: Symbol value differs between first and second pass
+0000191A=                          973  BossState                   dc.b 8                        ;State 0 waiting for update, State 4 shooting, State 8 Jumping, State 12 Dropping, State 16 Flooding
+Line 974 ERROR: Symbol value differs between first and second pass
+0000191A=                          974  BossColor                   dc.l $00FFFFFF
+0000191A                           975  
+Line 976 ERROR: Symbol value differs between first and second pass
+0000191A=                          976  BossBulletsLeftToShoot      dc.b BOSS_BULLET_COUNT_SHOT
+Line 977 ERROR: Symbol value differs between first and second pass
+0000191A=                          977  BossBulletsActive           dc.b 0
+Line 978 ERROR: Symbol value differs between first and second pass
+0000191A=                          978  BossTimeToShoot             dc.l 0
+Line 979 ERROR: Symbol value differs between first and second pass
+0000191A                           979  BossBulletArray             ds.l BOSS_MAX_BULLETS*BOSS_BULLET_DATA_SIZE_IN_BYTES
+0000191A                           980  
+Line 981 ERROR: Symbol value differs between first and second pass
+0000191A=                          981  BossRainLeftToShoot         dc.b BOSS_MAX_RAIN
+Line 982 ERROR: Symbol value differs between first and second pass
+0000191A=                          982  BossRainActive              dc.b 0
+Line 983 ERROR: Symbol value differs between first and second pass
+0000191A                           983  BossRainArray               ds.l BOSS_MAX_RAIN*BOSS_BULLET_DATA_SIZE_IN_BYTES ; center of where to draw, width,height, y velocity
+0000191A                           984  
+Line 985 ERROR: Symbol value differs between first and second pass
+0000191A=                          985  SetStateTable               dc.l SetStateOne, SetStateTwo, SetStateThree, SetStateFour
+Line 986 ERROR: Symbol value differs between first and second pass
+0000191A=                          986  UpdateStateTable            dc.l UpdateStateOne, UpdateStateTwo, UpdateStateThree, UpdateStateFour
+0000191A                           987  
+0000191A                           988  
+0000191A                           989  
+0000191A                           990  
+0000191A                           991  
+0000191A                           992  
+0000191A                           993  
+0000191A                           994  
+0000191A                           995  
+0000191A                           996  
+0000191A                           997  
+0000191A                           998  -------------------- end include --------------------
+0000191A                           999          INCLUDE "BossBullets.x68"
+0000191A                          1000  
+Line 1001 ERROR: Symbol value differs between first and second pass
+0000191A                          1001  UpdateBossBullets
+0000191A                          1002          
+0000191A  7000                    1003          move.l          #0,d0
+0000191C                          1004          
+Line 1005 ERROR: Symbol value differs between first and second pass
+0000191C                          1005  FindActiveBossBulletLoop
+0000191C  0138 1949               1006          btst            d0,(BossBulletsActive)
+00001920  6600 0336               1007          bne             ActiveBulletsFound
+00001924  5200                    1008          add.b           #1,d0
+00001926  B03C 0006               1009          cmp.b           #BOSS_MAX_BULLETS,d0
+0000192A  6E00 0340               1010          bgt             AllBossBulletsUpdated
+0000192E  4EF8 1C42               1011          jmp             FindActiveBossBulletLoop
+00001932                          1012  
+Line 1013 ERROR: Symbol value differs between first and second pass
+00001932                          1013  ActiveBulletsFound
+00001932                          1014  
+00001932  4EB9 00001C6E           1015          jsr             UpdateSpecificBossBullet
+00001938                          1016  
+00001938  5200                    1017          add.b           #1,d0
+0000193A  B03C 0006               1018          cmp.b           #BOSS_MAX_BULLETS,d0
+0000193E  6E00 032C               1019          bgt             AllBossBulletsUpdated
+00001942  4EF8 1C42               1020          jmp             FindActiveBossBulletLoop
+00001946                          1021  
+Line 1022 ERROR: Symbol value differs between first and second pass
+00001946                          1022  AllBossBulletsUpdated
+00001946                          1023              
+00001946  4E75                    1024          rts
+00001948                          1025          
+Line 1026 ERROR: Symbol value differs between first and second pass
+00001948                          1026  UpdateSpecificBossBullet
+00001948                          1027  
+00001948  2200                    1028          move.l          d0,d1
+0000194A  41F8 194E               1029          lea             BossBulletArray,a0
+0000194E  C2FC 0012               1030          mulu            #BOSS_BULLET_DATA_SIZE_IN_BYTES,d1
+00001952  D1C1                    1031          add.l           d1,a0
+00001954                          1032          
+00001954  2E38 122A               1033          move.l          (DeltaTime),d7
+00001958  3228 0008               1034          move.w          8(a0),d1
+0000195C  C3C7                    1035          muls            d7,d1
+0000195E  D290                    1036          add.l           (a0),d1
+00001960  B2BC 00001E00           1037          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d1
+00001966  6D00 0336               1038          blt             DeleteBossBullet
+0000196A  B2BC 00025800           1039          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BOSS_BULLET_WIDTH<<8,d1
+00001970  6E00 032C               1040          bgt             DeleteBossBullet
+00001974  2081                    1041          move.l          d1,(a0)        
+00001976  4E75                    1042          rts
+Line 1043 ERROR: Symbol value differs between first and second pass
+00001978                          1043  DeleteBossBullet        
+00001978  01B8 1949               1044          bclr            d0,(BossBulletsActive)
+0000197C  4E75                    1045          rts
+0000197E                          1046  
+0000197E                          1047          
+Line 1048 ERROR: Symbol value differs between first and second pass
+0000197E                          1048  DrawBossBullets
+0000197E                          1049  
+0000197E  7C00                    1050          move.l          #0,d6
+00001980  4DF8 194E               1051          lea             BossBulletArray,a6
+00001984                          1052          
+Line 1053 ERROR: Symbol value differs between first and second pass
+00001984                          1053  DrawActiveBossBulletLoop
+00001984  0D38 1949               1054          btst            d6,(BossBulletsActive)
+00001988  6600 033C               1055          bne             DrawActiveBossBulletFound   
+0000198C  5206                    1056          add.b           #1,d6
+0000198E  DDFC 00000012           1057          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001994  BC3C 0006               1058          cmp.b           #BOSS_MAX_BULLETS,d6
+00001998  6E00 0346               1059          bgt             AllBossBulletDrawn
+0000199C  4EF8 1CAA               1060          jmp             DrawActiveBossBulletLoop
+000019A0                          1061  
+Line 1062 ERROR: Symbol value differs between first and second pass
+000019A0                          1062  DrawActiveBossBulletFound   
+000019A0                          1063              
+000019A0  4EB9 00001CE2           1064          jsr             DrawSpecificBossBulletAtA6
+000019A6  5206                    1065          add.b           #1,d6
+000019A8  DDFC 00000012           1066          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+000019AE  BC3C 0006               1067          cmp.b           #BOSS_MAX_BULLETS,d6
+000019B2  6E00 032C               1068          bgt             AllBossBulletDrawn
+000019B6  4EF8 1CAA               1069          jmp             DrawActiveBossBulletLoop
+000019BA                          1070          
+Line 1071 ERROR: Symbol value differs between first and second pass
+000019BA                          1071  AllBossBulletDrawn
+000019BA                          1072              
+000019BA  4E75                    1073          rts
+000019BC                          1074          
+Line 1075 ERROR: Symbol value differs between first and second pass
+000019BC                          1075  DrawSpecificBossBulletAtA6
+000019BC                          1076  
+000019BC  223C 00FFFFFF           1077          move.l          #BULLET_COLOR,d1
+000019C2  103C 0050               1078          move.b          #SET_PEN_COLOR_COMMAND,d0
+000019C6  4E4F                    1079          trap            #15
+000019C8  103C 0051               1080          move.b          #SET_FILL_COLOR_COMMAND,d0
+000019CC  4E4F                    1081          trap            #15
+000019CE  103C 0058               1082          move.b          #DRAW_CIRCLE_COMMAND,d0
+000019D2                          1083  
+000019D2  2216                    1084          move.l          (a6),d1
+000019D4  E089                    1085          lsr.l           #8,d1
+000019D6  242E 0004               1086          move.l          4(a6),d2
+000019DA  E08A                    1087          lsr.l           #8,d2
+000019DC  2601                    1088          move.l          d1,d3
+000019DE  0683 0000000A           1089          add.l           #BOSS_BULLET_WIDTH,d3
+000019E4  2802                    1090          move.l          d2,d4
+000019E6  0684 0000000A           1091          add.l           #BOSS_BULLET_HEIGHT,d4  
+000019EC  4E4F                    1092          trap            #15
+000019EE                          1093          
+000019EE  4E75                    1094          rts
+000019F0                          1095          
+Line 1096 ERROR: Symbol value differs between first and second pass
+000019F0                          1096  EraseBossBullets        
+000019F0                          1097      
+000019F0  7C00                    1098          move.l          #0,d6
+000019F2  4DF8 194E               1099          lea             BossBulletArray,a6
+000019F6                          1100          
+Line 1101 ERROR: Symbol value differs between first and second pass
+000019F6                          1101  EraseActiveBossBulletLoop
+000019F6  0D38 1949               1102          btst            d6,(BossBulletsActive)
+000019FA  6600 033A               1103          bne             EraseActiveBossBulletFound
+000019FE  5206                    1104          add.b           #1,d6
+00001A00  DDFC 00000012           1105          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001A06  BC3C 0006               1106          cmp.b           #BOSS_MAX_BULLETS,d6
+00001A0A  6E00 02D4               1107          bgt             AllBossBulletDrawn
+00001A0E  4EF8 1D1C               1108          jmp             EraseActiveBossBulletLoop
+00001A12                          1109  
+Line 1110 ERROR: Symbol value differs between first and second pass
+00001A12                          1110  EraseActiveBossBulletFound   
+00001A12                          1111           
+00001A12  2F0E                    1112          move.l          a6,-(sp) 
+00001A14  2F06                    1113          move.l          d6,-(sp)  
+00001A16  4EB9 00001D58           1114          jsr             ErasedSpecificBossBulletAtA6
+00001A1C  2C1F                    1115          move.l          (sp)+,d6
+00001A1E  2C5F                    1116          move.l          (sp)+,a6
+00001A20                          1117          
+00001A20  5206                    1118          add.b           #1,d6
+00001A22  DDFC 00000012           1119          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001A28  BC3C 0006               1120          cmp.b           #BOSS_MAX_BULLETS,d6
+00001A2C  6E00 02B2               1121          bgt             AllBossBulletDrawn
+00001A30  4EF8 1D1C               1122          jmp             EraseActiveBossBulletLoop
+00001A34                          1123          
+Line 1124 ERROR: Symbol value differs between first and second pass
+00001A34                          1124  AllBossBulletErased
+00001A34                          1125              
+00001A34  4E75                    1126          rts
+00001A36                          1127          
+Line 1128 ERROR: Symbol value differs between first and second pass
+00001A36                          1128  ErasedSpecificBossBulletAtA6
+00001A36  2016                    1129          move.l          (a6),d0
+00001A38  E088                    1130          lsr.l           #8,d0
+00001A3A  5380                    1131          sub.l           #1,d0
+00001A3C  222E 0004               1132          move.l          4(a6),d1
+00001A40  E089                    1133          lsr.l           #8,d1
+00001A42  0481 FFFFFFFF           1134          sub.l           #-1,d1
+00001A48                          1135  
+00001A48  41F9 00002518           1136          lea.l           Bitmap, a0
+00001A4E  2000                    1137          move.l          d0,d0
+00001A50  2201                    1138          move.l          d1,d1
+00001A52  243C 0000000C           1139          move.l          #BULLET_DRAW_SIZE_WIDTH,d2
+00001A58  263C 0000000A           1140          move.l          #BULLET_SIZE_HEIGHT,d3
+00001A5E  2800                    1141          move.l          d0,d4
+00001A60  2A01                    1142          move.l          d1,d5
+00001A62                          1143          
+00001A62  4EB8 1130               1144          jsr             DrawBackgroundBitmap
+00001A66                          1145          
+00001A66  4E75                    1146          rts
+00001A68                          1147  
+00001A68                          1148  
+00001A68                          1149  
+00001A68                          1150  -------------------- end include --------------------
+00001A68                          1151          INCLUDE "PlayerController.x68"
+00001A68                          1152  
+00001A68  =00000014               1153  PLAYER_WIDTH                    EQU 20
+00001A68  =00000014               1154  PLAYER_HEIGHT                   EQU 20
+00001A68                          1155  
+00001A68  =00000200               1156  PLAYER_VELOCITY                 EQU $200
+00001A68  =00000680               1157  PLAYER_VELOCITY_UP              EQU $680
+00001A68  =00000040               1158  GRAVITY_SIZE                    EQU $40
+00001A68                          1159  
+00001A68  =00000013               1160  GET_KEY_INPUT_TRAP_CODE         EQU 19
+00001A68  =26252827               1161  GET_KEY_INPUT_D1_ULDR           EQU $26252827
+00001A68  =00000020               1162  GET_KEY_INPUT_D1____Sp          EQU $00000020
+00001A68                          1163  
+Line 1164 ERROR: Symbol value differs between first and second pass
+00001A68                          1164  UpdatePlayer       
+00001A68  4DF9 00001F2A           1165          lea             PlayerPositionAndSize,a6
+00001A6E                          1166  
+00001A6E  7013                    1167          move.l          #GET_KEY_INPUT_TRAP_CODE,d0
+00001A70  223C 26252827           1168          move.l          #GET_KEY_INPUT_D1_ULDR,d1
+00001A76  4E4F                    1169          trap            #15
+Line 1170 ERROR: Symbol value differs between first and second pass
+00001A78                          1170  RightInput        
+00001A78  1201                    1171          move.b          d1,d1
+00001A7A  6700 0334               1172          beq             LeftInput
+00001A7E  3D7C 0200 0010          1173          move.w          #PLAYER_VELOCITY,16(a6)
+00001A84  23FC 00000001 00001F42  1174          move.l          #1,(PlayerLookingRight)
+Line 1175 ERROR: Symbol value differs between first and second pass
+00001A8E                          1175  LeftInput
+00001A8E  4841                    1176          swap            d1
+00001A90  1201                    1177          move.b          d1,d1
+00001A92  6700 0334               1178          beq             UpInput
+00001A96  3D7C FE00 0010          1179          move.w          #-PLAYER_VELOCITY,16(a6)
+00001A9C  23FC 00000000 00001F42  1180          move.l          #0,(PlayerLookingRight)
+Line 1181 ERROR: Symbol value differs between first and second pass
+00001AA6                          1181  UpInput
+00001AA6  E089                    1182          lsr.l           #8,d1
+00001AA8  1201                    1183          move.b          d1,d1
+00001AAA  6700 035A               1184          beq             DownInput
+00001AAE  41F9 00001F46           1185          lea             PlayerJumpCounter,a0
+00001AB4  1028 0003               1186          move.b          3(a0),d0
+00001AB8  6700 034C               1187          beq             DownInput
+00001ABC  43F9 00001F4A           1188          lea             DebounceUpTime,a1
+00001AC2  2438 122E               1189          move.l          (OldTime),d2
+00001AC6  B491                    1190          cmp.l           (a1),d2
+00001AC8  6D00 033C               1191          blt             DownInput
+00001ACC  2238 122E               1192          move.l          (OldTime),d1
+00001AD0  0681 00000019           1193          add.l           #DEBOUNCE_TIME,d1
+00001AD6  2281                    1194          move.l          d1,(a1)
+00001AD8  3D7C F980 0012          1195          move.w          #-PLAYER_VELOCITY_UP,18(a6)
+00001ADE  5300                    1196          sub.b           #1,d0
+00001AE0  1140 0003               1197          move.b          d0,3(a0)
+Line 1198 ERROR: Symbol value differs between first and second pass
+00001AE4                          1198  DownInput  
+00001AE4  4841                    1199          swap            d1
+00001AE6  1201                    1200          move.b          d1,d1
+00001AE8  6700 0324               1201          beq             MoveInputDone
+00001AEC                          1202          
+Line 1203 ERROR: Symbol value differs between first and second pass
+00001AEC                          1203  MoveInputDone
+00001AEC                          1204  
+00001AEC  4EB9 00001E48           1205          jsr             UpdatePlayerInfo        
+00001AF2                          1206          
+00001AF2  3D7C 0000 0010          1207          move.w          #0,16(a6)           ; After updating player set players X speed to 0
+00001AF8                          1208          
+00001AF8  2039 00001F3E           1209          move.l          (PlayerOnGround),d0
+00001AFE  6600 0332               1210          bne             PlayerReachFloor
+00001B02  2038 122A               1211          move.l          (DeltaTime),d0
+00001B06  C1FC 0040               1212          muls            #GRAVITY_SIZE,d0
+00001B0A  D16E 0012               1213          add.w           d0,18(a6)
+00001B0E  4E75                    1214          rts
+Line 1215 ERROR: Symbol value differs between first and second pass
+00001B10                          1215  PlayerReachFloor
+00001B10  2D7C 00000000 0012      1216          move.l          #0,18(a6)
+00001B18  41F9 00001F46           1217          lea             PlayerJumpCounter,a0
+00001B1E  117C 0002 0003          1218          move.b          #2,3(a0)
+00001B24  4E75                    1219          rts
+00001B26                          1220          
+Line 1221 ERROR: Symbol value differs between first and second pass
+00001B26                          1221  UpdatePlayerInfo:
+00001B26  2038 122A               1222          move.l          (DeltaTime),d0
+00001B2A  C1EE 0010               1223          muls            16(a6),d0
+00001B2E  D096                    1224          add.l           (a6),d0
+00001B30  B0BC 00001E00           1225          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+00001B36  6F00 0336               1226          ble             PlayerReachLeftSide
+00001B3A  B0BC 00024E00           1227          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-20<<8,d0
+00001B40  6E00 0338               1228          bgt             PlayerReachRightSide
+00001B44  2C80                    1229          move.l          d0,(a6)
+00001B46  4EF9 00001E80           1230          jmp             FinishUpdatingPlayerX
+Line 1231 ERROR: Symbol value differs between first and second pass
+00001B4C                          1231  PlayerReachLeftSide
+00001B4C  2CBC 00001E00           1232          move.l          #LEFT_SIDE_OF_SCREEN<<8,(a6)
+00001B52  4EF9 00001E80           1233          jmp             FinishUpdatingPlayerX
+Line 1234 ERROR: Symbol value differs between first and second pass
+00001B58                          1234  PlayerReachRightSide
+00001B58  2CBC 00024E00           1235          move.l          #RIGHT_SIDE_OF_SCREEN<<8-20<<8,(a6)
+Line 1236 ERROR: Symbol value differs between first and second pass
+00001B5E                          1236  FinishUpdatingPlayerX
+00001B5E                          1237                 
+00001B5E  2038 122A               1238          move.l          (DeltaTime),d0
+00001B62  C1EE 0012               1239          muls            18(a6),d0
+00001B66  D0AE 0004               1240          add.l           4(a6),d0
+00001B6A  B0BC 00017C00           1241          cmp.l           #BOTTOM_SIDE_OF_SCREEN<<8-20<<8,d0
+00001B70  6E00 0334               1242          bgt             PlayerReachBottomUpdate
+00001B74  2D40 0004               1243          move.l          d0,4(a6)
+00001B78  23FC 00000000 00001F3E  1244          move.l          #0,(PlayerOnGround)
+00001B82  4E75                    1245          rts
+Line 1246 ERROR: Symbol value differs between first and second pass
+00001B84                          1246  PlayerReachBottomUpdate
+00001B84  2D7C 00017C00 0004      1247          move.l          #BOTTOM_SIDE_OF_SCREEN<<8-20<<8,4(a6)
+00001B8C  23FC 00000001 00001F3E  1248          move.l          #1,(PlayerOnGround)
+00001B96  4E75                    1249          rts
+00001B98                          1250          
+Line 1251 ERROR: Symbol value differs between first and second pass
+00001B98                          1251  DrawPlayer
+00001B98  4DF9 00001F2A           1252          lea             PlayerPositionAndSize,a6
+00001B9E                          1253  
+00001B9E  2239 00001F4E           1254          move.l          (PlayerColor),d1
+00001BA4  7050                    1255          move.l          #SET_PEN_COLOR_COMMAND,d0
+00001BA6  4E4F                    1256          trap            #15
+00001BA8  7051                    1257          move.l          #SET_FILL_COLOR_COMMAND,d0
+00001BAA  4E4F                    1258          trap            #15
+00001BAC                          1259  
+00001BAC  103C 0058               1260          move.b          #DRAW_CIRCLE_COMMAND,d0
+00001BB0  2216                    1261          move.l          (a6),d1
+00001BB2  E089                    1262          lsr.l           #8,d1
+00001BB4  242E 0004               1263          move.l          4(a6),d2
+00001BB8  E08A                    1264          lsr.l           #8,d2
+00001BBA  262E 0008               1265          move.l          8(a6),d3
+00001BBE  D696                    1266          add.l           (a6),d3
+00001BC0  E08B                    1267          lsr.l           #8,d3
+00001BC2  282E 000C               1268          move.l          12(a6),d4
+00001BC6  D8AE 0004               1269          add.l           4(a6),d4
+00001BCA  E08C                    1270          lsr.l           #8,d4   
+00001BCC  4E4F                    1271          trap            #15
+00001BCE                          1272  
+00001BCE  4E75                    1273          rts
+00001BD0                          1274          
+Line 1275 ERROR: Symbol value differs between first and second pass
+00001BD0                          1275  ErasePlayer: ;a6 memory location of x,y,w,h,v_x,v_y
+00001BD0                          1276         
+00001BD0  4DF9 00001F2A           1277          lea             PlayerPositionAndSize,a6
+00001BD6  2016                    1278          move.l          (a6),d0
+00001BD8  E088                    1279          lsr.l           #8,d0
+00001BDA  5380                    1280          sub.l           #1,d0
+00001BDC  222E 0004               1281          move.l          4(a6),d1
+00001BE0  E089                    1282          lsr.l           #8,d1
+00001BE2  0481 FFFFFFFF           1283          sub.l           #-1,d1
+00001BE8  242E 0008               1284          move.l          8(a6),d2
+00001BEC  E08A                    1285          lsr.l           #8,d2
+00001BEE  41F9 00002518           1286          lea.l           Bitmap, a0
+00001BF4  2000                    1287          move.l          d0,d0
+00001BF6  2201                    1288          move.l          d1,d1
+00001BF8  2602                    1289          move.l          d2,d3
+00001BFA  5482                    1290          add.l           #2,d2
+00001BFC  2402                    1291          move.l          d2,d2
+00001BFE  2800                    1292          move.l          d0,d4
+00001C00  2A01                    1293          move.l          d1,d5
+00001C02                          1294          
+00001C02  4EB8 1130               1295          jsr DrawBackgroundBitmap
+00001C06                          1296          
+00001C06  4E75                    1297          rts
+00001C08                          1298          
+Line 1299 ERROR: Symbol value differs between first and second pass
+00001C08=                         1299  PlayerPositionAndSize       dc.l 100<<8,100<<8,PLAYER_WIDTH<<8,PLAYER_HEIGHT<<8
+Line 1300 ERROR: Symbol value differs between first and second pass
+00001C08=                         1300  PlayerMovement              dc.w 0,0
+Line 1301 ERROR: Symbol value differs between first and second pass
+00001C08=                         1301  PlayerOnGround              dc.l 0
+Line 1302 ERROR: Symbol value differs between first and second pass
+00001C08=                         1302  PlayerLookingRight          dc.l 1
+Line 1303 ERROR: Symbol value differs between first and second pass
+00001C08=                         1303  PlayerJumpCounter           dc.l 2
+Line 1304 ERROR: Symbol value differs between first and second pass
+00001C08=                         1304  DebounceUpTime              dc.l 0
+Line 1305 ERROR: Symbol value differs between first and second pass
+00001C08=                         1305  PlayerColor                 dc.l WHITE
+00001C08                          1306  
+00001C08                          1307  
+00001C08                          1308  
+00001C08                          1309  
+00001C08                          1310  
+00001C08                          1311  
+00001C08                          1312  
+00001C08                          1313  
+00001C08                          1314  -------------------- end include --------------------
+00001C08                          1315          INCLUDE "Bullets.x68"
+00001C08                          1316  
+00001C08  =0000000A               1317  BULLET_SIZE_WIDTH               EQU 10
+00001C08  =0000000A               1318  BULLET_SIZE_HEIGHT              EQU 10
+00001C08  =00000300               1319  BULLET_SPEED                    EQU $300
+00001C08                          1320  
+00001C08  =0000000C               1321  BULLET_DRAW_SIZE_WIDTH          EQU 12
+00001C08  =00000003               1322  MAX_ALLOWED_BULLETS             EQU 3
+00001C08  =00000007               1323  FULL_ACTIVE_BULLETS             EQU $7
+00001C08                          1324  
+00001C08  =00FFFFFF               1325  BULLET_COLOR                    EQU $00FFFFFF
+00001C08                          1326  
+Line 1327 ERROR: Symbol value differs between first and second pass
+00001C08                          1327  UpdateBullets:
+00001C08  7013                    1328          move.l          #GET_KEY_INPUT_TRAP_CODE,d0
+00001C0A  7220                    1329          move.l          #GET_KEY_INPUT_D1____Sp,d1
+00001C0C  4E4F                    1330          trap            #15
+Line 1331 ERROR: Symbol value differs between first and second pass
+00001C0E                          1331  OneButtonsPressed               
+00001C0E  1201                    1332          move.b          d1,d1
+00001C10  6700 036E               1333          beq             OtherInputDone
+00001C14                          1334          
+00001C14  43F9 00002240           1335          lea             DebounceOneTime,a1
+00001C1A  2438 122E               1336          move.l          (OldTime),d2
+00001C1E  B491                    1337          cmp.l           (a1),d2
+00001C20  6D00 035E               1338          blt             OtherInputDone
+00001C24  2238 122E               1339          move.l          (OldTime),d1
+00001C28  0681 00000019           1340          add.l           #DEBOUNCE_TIME,d1
+00001C2E  2281                    1341          move.l          d1,(a1)
+00001C30  4EB9 00001F88           1342          jsr             CreateBullets
+Line 1343 ERROR: Symbol value differs between first and second pass
+00001C36                          1343  OtherInputDone
+00001C36                          1344  
+00001C36  4EB9 00002034           1345          jsr             UpdateBulletsPositions
+00001C3C                          1346          
+00001C3C  4E75                    1347          rts
+00001C3E                          1348          
+Line 1349 ERROR: Symbol value differs between first and second pass
+00001C3E                          1349  CreateBullets:
+00001C3E  1039 00002221           1350          move.b          (ActiveBullets),d0
+00001C44                          1351          ;cmp.b           #FULL_ACTIVE_BULLETS,d0
+00001C44                          1352          ;beq             BulletsFull
+Line 1353 ERROR: Symbol value differs between first and second pass
+00001C44                          1353  CreateFirstBullet        
+00001C44  0839 0000 00002221      1354          btst            #0,(ActiveBullets)
+00001C4C  6600 0368               1355          bne             CreateSecondBullet
+00001C50                          1356          
+00001C50  4DF9 00002222           1357          lea             BulletOnePosition,a6
+00001C56  08F9 0000 00002221      1358          bset            #0,(ActiveBullets)
+00001C5E  2438 1F42               1359          move.l          (PlayerLookingRight),d2
+00001C62  6700 03A2               1360          beq             BulletSetNegativeSpeed
+00001C66  4EF9 0000201A           1361          jmp             BulletSetPositiveSpeed
+Line 1362 ERROR: Symbol value differs between first and second pass
+00001C6C                          1362  CreateSecondBullet
+00001C6C  0839 0001 00002221      1363          btst            #1,(ActiveBullets)
+00001C74  6600 0368               1364          bne             CreateThirdBullet
+00001C78                          1365          
+00001C78  4DF9 0000222C           1366          lea             BulletTwoPosition,a6
+00001C7E  08F9 0001 00002221      1367          bset            #1,(ActiveBullets)
+00001C86  2438 1F42               1368          move.l          (PlayerLookingRight),d2
+00001C8A  6700 037A               1369          beq             BulletSetNegativeSpeed
+00001C8E  4EF9 0000201A           1370          jmp             BulletSetPositiveSpeed
+00001C94                          1371          
+Line 1372 ERROR: Symbol value differs between first and second pass
+00001C94                          1372  CreateThirdBullet
+00001C94  0839 0002 00002221      1373          btst            #2,(ActiveBullets)
+00001C9C  6600 0394               1374          bne             BulletsFull
+00001CA0                          1375          
+00001CA0  4DF9 00002236           1376          lea             BulletThreePosition,a6
+00001CA6  08F9 0002 00002221      1377          bset            #2,(ActiveBullets)
+00001CAE  2438 1F42               1378          move.l          (PlayerLookingRight),d2
+00001CB2  6700 0352               1379          beq             BulletSetNegativeSpeed
+00001CB6  4EF9 0000201A           1380          jmp             BulletSetPositiveSpeed
+00001CBC                          1381          
+Line 1382 ERROR: Symbol value differs between first and second pass
+00001CBC                          1382  BulletSetNegativeSpeed
+00001CBC  3D7C FD00 0008          1383          move.w          #-BULLET_SPEED,8(a6)
+00001CC2  4BF8 1F2A               1384          lea             PlayerPositionAndSize,a5
+00001CC6  2C95                    1385          move.l          (a5),(a6)
+00001CC8  2D6D 0004 0004          1386          move.l          4(a5),4(a6)
+00001CCE  4E75                    1387          rts
+Line 1388 ERROR: Symbol value differs between first and second pass
+00001CD0                          1388  BulletSetPositiveSpeed
+00001CD0  3D7C 0300 0008          1389          move.w          #BULLET_SPEED,8(a6)
+00001CD6  4BF8 1F2A               1390          lea             PlayerPositionAndSize,a5
+00001CDA  2415                    1391          move.l          (a5),d2
+00001CDC  D4AD 0008               1392          add.l           8(a5),d2
+00001CE0  2C82                    1393          move.l          d2,(a6)
+00001CE2  2D6D 0004 0004          1394          move.l          4(a5),4(a6)
+Line 1395 ERROR: Symbol value differs between first and second pass
+00001CE8                          1395  BulletsFull
+00001CE8  4E75                    1396          rts
+00001CEA                          1397  
+Line 1398 ERROR: Symbol value differs between first and second pass
+00001CEA                          1398  UpdateBulletsPositions:
+00001CEA  2238 122A               1399          move.l          (DeltaTime),d1
+00001CEE  7400                    1400          moveq.l         #0,d2
+00001CF0  1439 00002221           1401          move.b          (ActiveBullets),d2
+00001CF6                          1402          
+00001CF6  6700 0428               1403          beq             UpdateBulletEnd
+00001CFA                          1404          
+Line 1405 ERROR: Symbol value differs between first and second pass
+00001CFA                          1405  UpdateBulletOne 
+00001CFA  0839 0000 00002221      1406          btst            #0,(ActiveBullets)
+00001D02  6700 0388               1407          beq             UpdateBulletTwo
+00001D06                          1408           
+00001D06  7000                    1409          moveq.l         #0,d0
+00001D08  41F9 00002222           1410          lea             BulletOnePosition,a0
+00001D0E  3028 0008               1411          move.w          8(a0),d0
+00001D12  C1C1                    1412          muls            d1,d0
+00001D14  D090                    1413          add.l           (a0),d0
+00001D16  2080                    1414          move.l          d0,(a0)
+00001D18  B0BC 00001E00           1415          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+00001D1E  6D00 035E               1416          blt             DestoryOneBullet
+00001D22  B0BC 00025800           1417          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BULLET_SIZE_WIDTH<<8,d0
+00001D28  6E00 0354               1418          bgt             DestoryOneBullet
+00001D2C  2080                    1419          move.l          d0,(a0)
+00001D2E  4EF9 0000208C           1420          jmp             UpdateBulletTwo
+Line 1421 ERROR: Symbol value differs between first and second pass
+00001D34                          1421  DestoryOneBullet
+00001D34  4EB9 000021AA           1422          jsr             EraseBullets
+00001D3A  08B9 0000 00002221      1423          bclr            #0,(ActiveBullets)
+Line 1424 ERROR: Symbol value differs between first and second pass
+00001D42                          1424  UpdateBulletTwo
+00001D42  0839 0001 00002221      1425          btst            #1,(ActiveBullets)
+00001D4A  6700 038A               1426          beq             UpdateBulletThree         
+00001D4E                          1427          
+00001D4E  2238 122A               1428          move.l          (DeltaTime),d1
+00001D52  41F9 0000222C           1429          lea             BulletTwoPosition,a0
+00001D58  3028 0008               1430          move.w          8(a0),d0
+00001D5C  C1C1                    1431          muls            d1,d0
+00001D5E  D090                    1432          add.l           (a0),d0
+00001D60  2080                    1433          move.l          d0,(a0)
+00001D62  B0BC 00001E00           1434          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+00001D68  6D00 035E               1435          blt             DestoryTwoBullet
+00001D6C  B0BC 00025800           1436          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BULLET_SIZE_WIDTH<<8,d0
+00001D72  6E00 0354               1437          bgt             DestoryTwoBullet
+00001D76  2080                    1438          move.l          d0,(a0)
+00001D78  4EF9 000020D6           1439          jmp             UpdateBulletThree
+Line 1440 ERROR: Symbol value differs between first and second pass
+00001D7E                          1440  DestoryTwoBullet
+00001D7E  4EB9 000021AA           1441          jsr             EraseBullets
+00001D84  08B9 0001 00002221      1442          bclr            #1,(ActiveBullets)
+Line 1443 ERROR: Symbol value differs between first and second pass
+00001D8C                          1443  UpdateBulletThree
+00001D8C  0839 0002 00002221      1444          btst            #2,(ActiveBullets)
+00001D94  6700 038A               1445          beq             UpdateBulletEnd
+00001D98                          1446          
+00001D98  2238 122A               1447          move.l          (DeltaTime),d1
+00001D9C  41F9 00002236           1448          lea             BulletThreePosition,a0
+00001DA2  3028 0008               1449          move.w          8(a0),d0
+00001DA6  C1C1                    1450          muls            d1,d0
+00001DA8  D090                    1451          add.l           (a0),d0
+00001DAA  2080                    1452          move.l          d0,(a0)
+00001DAC  B0BC 00001E00           1453          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+00001DB2  6D00 035E               1454          blt             DestoryThirdBullet
+00001DB6  B0BC 00025800           1455          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BULLET_SIZE_WIDTH<<8,d0
+00001DBC  6E00 0354               1456          bgt             DestoryThirdBullet
+00001DC0  2080                    1457          move.l          d0,(a0)
+00001DC2  4EF9 00002120           1458          jmp             UpdateBulletEnd
+Line 1459 ERROR: Symbol value differs between first and second pass
+00001DC8                          1459  DestoryThirdBullet
+00001DC8  4EB9 000021AA           1460          jsr             EraseBullets
+00001DCE  08B9 0002 00002221      1461          bclr            #2,(ActiveBullets)
+00001DD6                          1462          
+Line 1463 ERROR: Symbol value differs between first and second pass
+00001DD6                          1463  UpdateBulletEnd       
+00001DD6  4E75                    1464          rts
+00001DD8                          1465          
+Line 1466 ERROR: Symbol value differs between first and second pass
+00001DD8                          1466  DrawBullets:
+00001DD8  223C 00FFFFFF           1467          move.l          #BULLET_COLOR,d1
+00001DDE  103C 0050               1468          move.b          #SET_PEN_COLOR_COMMAND,d0
+00001DE2  4E4F                    1469          trap            #15
+00001DE4  103C 0051               1470          move.b          #SET_FILL_COLOR_COMMAND,d0
+00001DE8  4E4F                    1471          trap            #15
+00001DEA  103C 0058               1472          move.b          #DRAW_CIRCLE_COMMAND,d0
+00001DEE                          1473          
+00001DEE  1A39 00002221           1474          move.b          (ActiveBullets),d5
+00001DF4  6700 0394               1475          beq             EndDrawBullets
+00001DF8                          1476                  
+Line 1477 ERROR: Symbol value differs between first and second pass
+00001DF8                          1477  DrawFirstBullet     
+00001DF8  0839 0000 00002221      1478          btst            #0,(ActiveBullets)
+00001E00  6700 0358               1479          beq             DrawSecondBullet
+00001E04                          1480          
+00001E04  4DF9 00002222           1481          lea             BulletOnePosition,a6
+00001E0A  4EB9 0000218C           1482          jsr             DrawSpecificBulletAtA6
+00001E10                          1483  
+Line 1484 ERROR: Symbol value differs between first and second pass
+00001E10                          1484  DrawSecondBullet
+00001E10  0839 0001 00002221      1485          btst            #1,(ActiveBullets)
+00001E18  6700 0358               1486          beq             DrawThirdBullet
+00001E1C                          1487      
+00001E1C  4DF9 0000222C           1488          lea             BulletTwoPosition,a6
+00001E22  4EB9 0000218C           1489          jsr             DrawSpecificBulletAtA6
+00001E28                          1490  
+Line 1491 ERROR: Symbol value differs between first and second pass
+00001E28                          1491  DrawThirdBullet    
+00001E28  0839 0002 00002221      1492          btst            #2,(ActiveBullets)
+00001E30  6700 0358               1493          beq             EndDrawBullets
+00001E34                          1494      
+00001E34  4DF9 00002236           1495          lea             BulletThreePosition,a6
+00001E3A  4EB9 0000218C           1496          jsr             DrawSpecificBulletAtA6
+00001E40                          1497  
+Line 1498 ERROR: Symbol value differs between first and second pass
+00001E40                          1498  EndDrawBullets
+00001E40  4E75                    1499          rts
+00001E42                          1500          
+Line 1501 ERROR: Symbol value differs between first and second pass
+00001E42                          1501  DrawSpecificBulletAtA6
+00001E42  2216                    1502          move.l          (a6),d1
+00001E44  E089                    1503          lsr.l           #8,d1
+00001E46  242E 0004               1504          move.l          4(a6),d2
+00001E4A  E08A                    1505          lsr.l           #8,d2
+00001E4C  2601                    1506          move.l          d1,d3
+00001E4E  0683 0000000A           1507          add.l           #BULLET_SIZE_WIDTH,d3
+00001E54  2802                    1508          move.l          d2,d4
+00001E56  0684 0000000A           1509          add.l           #BULLET_SIZE_HEIGHT,d4  
+00001E5C  4E4F                    1510          trap            #15
+00001E5E                          1511          
+00001E5E  4E75                    1512          rts
+00001E60                          1513      
+Line 1514 ERROR: Symbol value differs between first and second pass
+00001E60                          1514  EraseBullets:
+00001E60                          1515          
+Line 1516 ERROR: Symbol value differs between first and second pass
+00001E60                          1516  EraseFirstBullet
+00001E60  0839 0000 00002221      1517          btst            #0,(ActiveBullets)
+00001E68  6700 0358               1518          beq             EraseSecondBullet
+00001E6C                          1519          
+00001E6C  4DF9 00002222           1520          lea             BulletOnePosition,a6
+00001E72  4EB9 000021F4           1521          jsr             EraseCall
+00001E78                          1522          
+Line 1523 ERROR: Symbol value differs between first and second pass
+00001E78                          1523  EraseSecondBullet
+00001E78  0839 0001 00002221      1524          btst            #1,(ActiveBullets)
+00001E80  6700 0358               1525          beq             EraseThirdBullet
+00001E84  4DF9 0000222C           1526          lea             BulletTwoPosition,a6
+00001E8A  4EB9 000021F4           1527          jsr             EraseCall
+00001E90                          1528          
+Line 1529 ERROR: Symbol value differs between first and second pass
+00001E90                          1529  EraseThirdBullet
+00001E90  0839 0002 00002221      1530          btst            #2,(ActiveBullets)
+00001E98  6700 0384               1531          beq             EraseBulletDone
+00001E9C  4DF9 00002236           1532          lea             BulletThreePosition,a6
+00001EA2  4EB9 000021F4           1533          jsr             EraseCall
+00001EA8  4E75                    1534          rts
+Line 1535 ERROR: Symbol value differs between first and second pass
+00001EAA                          1535  EraseCall
+00001EAA  2016                    1536          move.l          (a6),d0
+00001EAC  E088                    1537          lsr.l           #8,d0
+00001EAE  5380                    1538          sub.l           #1,d0
+00001EB0  222E 0004               1539          move.l          4(a6),d1
+00001EB4  E089                    1540          lsr.l           #8,d1
+00001EB6  0481 FFFFFFFF           1541          sub.l           #-1,d1
+00001EBC                          1542  
+00001EBC  41F9 00002518           1543          lea.l           Bitmap, a0
+00001EC2  2000                    1544          move.l          d0,d0
+00001EC4  2201                    1545          move.l          d1,d1
+00001EC6  740C                    1546          move.l          #BULLET_DRAW_SIZE_WIDTH,d2
+00001EC8  760A                    1547          move.l          #BULLET_SIZE_HEIGHT,d3
+00001ECA  2800                    1548          move.l          d0,d4
+00001ECC  2A01                    1549          move.l          d1,d5
+00001ECE  4EB8 1130               1550          jsr             DrawBackgroundBitmap
+00001ED2  4E75                    1551          rts
+Line 1552 ERROR: Symbol value differs between first and second pass
+00001ED4                          1552  EraseBulletDone
+00001ED4  4E75                    1553          rts        
+00001ED6                          1554  
+Line 1555 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1555  AllowedBullets              dc.b MAX_ALLOWED_BULLETS
+Line 1556 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1556  ActiveBullets               dc.b 0
+Line 1557 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1557  BulletOnePosition           dc.l 0<<8,0<<8
+Line 1558 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1558  BulletOneSpeed              dc.w 0
+Line 1559 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1559  BulletTwoPosition           dc.l 0<<8,0<<8
+Line 1560 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1560  BulletTwoSpeed              dc.w 0
+Line 1561 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1561  BulletThreePosition         dc.l 0<<8,0<<8
+Line 1562 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1562  BulletThreeSpeed            dc.w 0
+00001ED6                          1563  
+Line 1564 ERROR: Symbol value differs between first and second pass
+00001ED6=                         1564  DebounceOneTime             dc.l 0
+00001ED6                          1565  
+00001ED6                          1566  
+00001ED6                          1567  
+00001ED6                          1568  
+00001ED6                          1569  
+00001ED6                          1570  -------------------- end include --------------------
+00001ED6                          1571          INCLUDE "BitmapDrawer.x68"
+00001ED6                          1572      
+00001ED6  =00000050               1573  PEN_COLOR_TRAP_CODE                     EQU     80
+00001ED6  =00000052               1574  DRAW_PIXEL_TRAP_CODE                    EQU     82
+00001ED6  =00000021               1575  SET_OUTPUT_RESOLUTION_TRAP_CODE         EQU     33
+00001ED6                          1576  
+00001ED6  =0000424D               1577  BITMAP_HEADER_FIELD                     EQU     16973
+00001ED6  =00000012               1578  BITMAP_WIDTH_OFFSET                     EQU     18
+00001ED6  =00000016               1579  BITMAP_HEIGHT_OFFSET                    EQU     22
+00001ED6  =0000000A               1580  BITMAP_PIXEL_ARRAY_OFFSET               EQU     10
+00001ED6  =00000036               1581  BITMAP_COLOR_ARRAY_OFFSET               EQU     54
+00001ED6  =0000002E               1582  BITMAP_NUM_OF_COLOR_IN_PALETTE          EQU     46
+00001ED6                          1583  
+00001ED6  =00000004               1584  STACK_ARGUMENT_ONE                      EQU     4
+00001ED6  =00000008               1585  STACK_ARGUMENT_TWO                      EQU     8
+00001ED6  =0000000C               1586  STACK_ARGUMENT_THREE                    EQU     12
+00001ED6  =00000010               1587  STACK_ARGUMENT_FOUR                     EQU     16
+00001ED6  =00000014               1588  STACK_ARGUMENT_FIVE                     EQU     20
+00001ED6  =00000018               1589  STACK_ARGUMENT_SIX                      EQU     24
+00001ED6  =0000001C               1590  STACK_ARGUMENT_SEVEN                    EQU     28
+00001ED6                          1591  
+00001ED6  =00000004               1592  LONG_LENGTH_IN_BYTES                    EQU     4
+00001ED6                          1593  
+00001ED6  =00000280               1594  OUTPUT_WIDTH                            EQU     640
+00001ED6  =000001E0               1595  OUTPUT_HEIGHT                           EQU     480
+00001ED6                          1596     
+00001ED6                          1597  ;START    ORG    $1000
+00001ED6                          1598          
+Line 1599 ERROR: Symbol value differs between first and second pass
+00001ED6                          1599  TurnAddressToBigEndian: ; address in d7, returns address in d7
+00001ED6  E15F                    1600          rol.w       #8, d7
+00001ED8  4847                    1601          swap        d7
+00001EDA  E15F                    1602          rol.w       #8, d7 
+00001EDC  4E75                    1603          rts
+00001EDE                          1604  
+Line 1605 ERROR: Symbol value differs between first and second pass
+00001EDE                          1605  DrawBitmap ;Arguemnts bitmap address, x,y,width,height (of bitmap) and x,y (where to draw)
+00001EDE                          1606     
+00001EDE  226F 001C               1607          move.l      STACK_ARGUMENT_SEVEN(sp),a1     ; check if valid bitmap
+00001EE2                          1608          
+00001EE2                          1609          ;get address (in memeory of pixel array) and put it into a2
+00001EE2  2449                    1610          move.l      a1,a2
+00001EE4  D5FC 0000000A           1611          add.l       #BITMAP_PIXEL_ARRAY_OFFSET,a2
+00001EEA  2E12                    1612          move.l      (a2),d7
+00001EEC  4EB8 2244               1613          jsr         TurnAddressToBigEndian
+00001EF0  2447                    1614          move.l      d7,a2
+00001EF2  D5C9                    1615          add.l       a1,a2
+00001EF4                          1616          
+00001EF4                          1617          ;might need to change to long but if only 256 colors then byte will work
+00001EF4                          1618          ;go to non palette version if there is 0 colors in the palette
+00001EF4  1029 002E               1619          move.b      BITMAP_NUM_OF_COLOR_IN_PALETTE(a1),d0
+00001EF8  6700 0458               1620          beq         DrawNonPalette   
+00001EFC                          1621          
+Line 1622 ERROR: Symbol value differs between first and second pass
+00001EFC                          1622  DrawPalette:
+00001EFC                          1623          ;store the location of the color array to later offset
+00001EFC  2649                    1624          move.l      a1,a3
+00001EFE  D7FC 00000036           1625          add.l       #BITMAP_COLOR_ARRAY_OFFSET,a3
+00001F04                          1626  
+00001F04  242F 0004               1627          move.l      STACK_ARGUMENT_ONE(sp),d2
+00001F08  D4AF 000C               1628          add.l       STACK_ARGUMENT_THREE(sp),d2
+00001F0C  5382                    1629          sub.l       #1,d2
+00001F0E                          1630          
+00001F0E  262F 0008               1631          move.l      STACK_ARGUMENT_TWO(sp),d3
+00001F12                          1632       
+00001F12  282F 000C               1633          move.l      STACK_ARGUMENT_THREE(sp),d4
+00001F16  5284                    1634          add.l       #1,d4
+00001F18                          1635          
+00001F18  2A2F 0010               1636          move.l      STACK_ARGUMENT_FOUR(sp),d5
+00001F1C                          1637  
+00001F1C  2E29 0012               1638          move.l      BITMAP_WIDTH_OFFSET(a1),d7      ;store the offset between rows
+00001F20  4EB8 2244               1639          jsr         TurnAddressToBigEndian
+00001F24  2C07                    1640          move.l      d7,d6
+00001F26  CCBC 00000003           1641          and.l       #3,d6                           ;padding
+00001F2C  CCFC 0003               1642          mulu        #3,d6
+00001F30  CCBC 00000003           1643          and.l       #3,d6                           ;padding
+00001F36  DE86                    1644          add.l       d6,d7
+00001F38  2A47                    1645          move.l      d7,a5
+00001F3A  9EAF 0010               1646          sub.l       STACK_ARGUMENT_FOUR(sp),d7 
+00001F3E  2C47                    1647          move.l      d7,a6
+00001F40                          1648          
+00001F40  204A                    1649          move.l      a2,a0
+00001F42  2E29 0016               1650          move.l      BITMAP_HEIGHT_OFFSET(a1),d7
+00001F46  4EB8 2244               1651          jsr         TurnAddressToBigEndian
+00001F4A  9EAF 000C               1652          sub.l       STACK_ARGUMENT_THREE(sp),d7
+00001F4E  9EAF 0014               1653          sub.l       STACK_ARGUMENT_FIVE(sp),d7
+00001F52  2C0D                    1654          move.l      a5,d6
+00001F54  CCC7                    1655          mulu        d7,d6
+00001F56  DCAF 0018               1656          add.l       STACK_ARGUMENT_SIX(sp),d6
+00001F5A  D1C6                    1657          add.l       d6,a0
+00001F5C                          1658          
+00001F5C  2E05                    1659          move.l      d5,d7
+00001F5E  CEBC 00000001           1660          and.l       #1,d7
+00001F64                          1661  
+Line 1662 ERROR: Symbol value differs between first and second pass
+00001F64                          1662  PaletteEvenOrOdd: 
+00001F64  3E07                    1663          move        d7,d7
+00001F66  6700 0394               1664          beq         DrawPaletteLoop
+Line 1665 ERROR: Symbol value differs between first and second pass
+00001F6A                          1665  DrawOnePointPalette:
+00001F6A  284B                    1666          move.l      a3,a4
+00001F6C  4246                    1667          clr.w       d6
+00001F6E  DC18                    1668          add.b       (a0)+,d6
+00001F70  E54E                    1669          lsl.w       #2,d6
+00001F72  D9C6                    1670          add.l       d6,a4
+00001F74  2214                    1671          move.l      (a4),d1                     ;get color value into d1 to set pen color
+00001F76  E089                    1672          lsr.l       #8,d1
+00001F78                          1673          
+00001F78                          1674          ;Set pen color
+00001F78  7050                    1675          move.l      #PEN_COLOR_TRAP_CODE,d0
+00001F7A  4E4F                    1676          trap        #15
+00001F7C                          1677          
+00001F7C                          1678          ;Color at this point
+00001F7C  2203                    1679          move.l      d3,d1
+00001F7E  7052                    1680          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+00001F80  4E4F                    1681          trap        #15
+00001F82                          1682          
+00001F82  5283                    1683          addi.l      #1,d3
+00001F84  0685 FFFFFFFF           1684          addi.l      #-1,d5
+00001F8A  6700 03AC               1685          beq         FinishInnerLoopPalette
+00001F8E                          1686  
+Line 1687 ERROR: Symbol value differs between first and second pass
+00001F8E                          1687  DrawPaletteLoop: 
+00001F8E                          1688          
+00001F8E  284B                    1689          move.l      a3,a4
+00001F90  2A4B                    1690          move.l      a3,a5
+00001F92  7C00                    1691          moveq.l     #0,d6
+00001F94  DC18                    1692          add.b       (a0)+,d6
+00001F96  4846                    1693          swap        d6
+00001F98  DC18                    1694          add.b       (a0)+,d6
+00001F9A  E58E                    1695          lsl.l       #2,d6
+00001F9C  D8C6                    1696          add.w       d6,a4
+00001F9E  4846                    1697          swap        d6
+00001FA0  DAC6                    1698          add.w       d6,a5
+00001FA2  2215                    1699          move.l      (a5),d1                     ;get color value into d1 to set pen color
+00001FA4  E089                    1700          lsr.l       #8,d1
+00001FA6                          1701          
+00001FA6                          1702          ;Set pen color
+00001FA6  7050                    1703          move.l      #PEN_COLOR_TRAP_CODE,d0
+00001FA8  4E4F                    1704          trap        #15
+00001FAA                          1705          
+00001FAA                          1706          ;Color at this point
+00001FAA  2203                    1707          move.l      d3,d1
+00001FAC  7052                    1708          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+00001FAE  4E4F                    1709          trap        #15
+00001FB0                          1710          
+00001FB0  5283                    1711          addq.l      #1,d3       
+00001FB2  2214                    1712          move.l      (a4),d1                     ;get color value into d1 to set pen color
+00001FB4  E089                    1713          lsr.l       #8,d1
+00001FB6                          1714          
+00001FB6                          1715          ;Set pen color
+00001FB6  7050                    1716          move.l      #PEN_COLOR_TRAP_CODE,d0
+00001FB8  4E4F                    1717          trap        #15
+00001FBA                          1718          
+00001FBA                          1719          ;Color at this point
+00001FBA  2203                    1720          move.l      d3,d1
+00001FBC  7052                    1721          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+00001FBE  4E4F                    1722          trap        #15
+00001FC0                          1723          
+00001FC0  5283                    1724          addi.l      #1,d3
+00001FC2  0685 FFFFFFFE           1725          addi.l      #-2,d5
+00001FC8  6600 0332               1726          bne         DrawPaletteLoop
+Line 1727 ERROR: Symbol value differs between first and second pass
+00001FCC                          1727  FinishInnerLoopPalette:
+00001FCC  262F 0008               1728          move.l      STACK_ARGUMENT_TWO(sp),d3
+00001FD0  2A2F 0010               1729          move.l      STACK_ARGUMENT_FOUR(sp),d5
+00001FD4  D1CE                    1730          add.l       a6,a0
+00001FD6  0682 FFFFFFFF           1731          addi.l      #-1,d2
+00001FDC  0684 FFFFFFFF           1732          addi.l      #-1,d4
+00001FE2  6600 02EE               1733          bne         PaletteEvenOrOdd
+00001FE6                          1734         
+00001FE6  4E75                    1735          rts   
+00001FE8                          1736       
+00001FE8                          1737          
+Line 1738 ERROR: Symbol value differs between first and second pass
+00001FE8                          1738  DrawNonPalette:
+00001FE8                          1739          
+00001FE8  242F 0004               1740          move.l      STACK_ARGUMENT_ONE(sp),d2
+00001FEC  D4AF 000C               1741          add.l       STACK_ARGUMENT_THREE(sp),d2
+00001FF0  5382                    1742          sub.l       #1,d2
+00001FF2                          1743          
+00001FF2  262F 0008               1744          move.l      STACK_ARGUMENT_TWO(sp),d3
+00001FF6  2643                    1745          move.l      d3,a3
+00001FF8                          1746       
+00001FF8  282F 000C               1747          move.l      STACK_ARGUMENT_THREE(sp),d4
+00001FFC  5284                    1748          add.l       #1,d4
+00001FFE                          1749          
+00001FFE  2A2F 0010               1750          move.l      STACK_ARGUMENT_FOUR(sp),d5
+00002002  2845                    1751          move.l      d5,a4
+00002004                          1752  
+00002004  2E29 0012               1753          move.l      BITMAP_WIDTH_OFFSET(a1),d7      ;store the offset between rows
+00002008  4EB8 2244               1754          jsr         TurnAddressToBigEndian
+0000200C  2C07                    1755          move.l      d7,d6
+0000200E  DE86                    1756          add.l       d6,d7
+00002010  DE86                    1757          add.l       d6,d7
+00002012  CCBC 00000003           1758          and.l       #3,d6
+00002018  DE86                    1759          add.l       d6,d7
+0000201A  2A47                    1760          move.l      d7,a5
+0000201C  9EAF 0010               1761          sub.l       STACK_ARGUMENT_FOUR(sp),d7  
+00002020  9EAF 0010               1762          sub.l       STACK_ARGUMENT_FOUR(sp),d7
+00002024  9EAF 0010               1763          sub.l       STACK_ARGUMENT_FOUR(sp),d7  
+00002028  2C47                    1764          move.l      d7,a6
+0000202A                          1765          
+0000202A  204A                    1766          move.l      a2,a0
+0000202C  2E29 0016               1767          move.l      BITMAP_HEIGHT_OFFSET(a1),d7
+00002030  4EB8 2244               1768          jsr         TurnAddressToBigEndian
+00002034  9EAF 000C               1769          sub.l       STACK_ARGUMENT_THREE(sp),d7
+00002038  9EAF 0014               1770          sub.l       STACK_ARGUMENT_FIVE(sp),d7
+0000203C  2C0D                    1771          move.l      a5,d6
+0000203E  CCC7                    1772          mulu        d7,d6
+00002040  DCAF 0018               1773          add.l       STACK_ARGUMENT_SIX(sp),d6
+00002044  DCAF 0018               1774          add.l       STACK_ARGUMENT_SIX(sp),d6
+00002048  DCAF 0018               1775          add.l       STACK_ARGUMENT_SIX(sp),d6
+0000204C  D1C6                    1776          add.l       d6,a0
+0000204E                          1777          
+0000204E  2C08                    1778          move.l      a0,d6
+00002050  CCBC 00000001           1779          and.l       #1,d6
+00002056  1E06                    1780          move.b      d6,d7
+00002058                          1781  
+Line 1782 ERROR: Symbol value differs between first and second pass
+00002058                          1782  DrawNonPaletteLoop:
+00002058                          1783  
+00002058  1C06                    1784          move.b      d6,d6
+0000205A  6600 037A               1785          bne         DrawNonPaletteOdd
+0000205E                          1786          
+Line 1787 ERROR: Symbol value differs between first and second pass
+0000205E                          1787  DrawNonPaletteEven:
+0000205E  2210                    1788          move.l      (a0),d1
+00002060  E089                    1789          lsr.l       #8,d1
+00002062  5688                    1790          add.l       #3,a0      
+00002064  7C01                    1791          moveq.l     #1,d6
+00002066  4EF9 000023E0           1792          jmp         DrawNonPaletteDrawer
+0000206C                          1793          
+Line 1794 ERROR: Symbol value differs between first and second pass
+0000206C                          1794  DrawNonPaletteOdd:
+0000206C  4241                    1795          clr.w       d1
+0000206E  1218                    1796          move.b      (a0)+,d1
+00002070  4841                    1797          swap        d1
+00002072  3218                    1798          move.w      (a0)+,d1
+00002074  7C00                    1799          moveq.l     #0,d6
+00002076                          1800          
+Line 1801 ERROR: Symbol value differs between first and second pass
+00002076                          1801  DrawNonPaletteDrawer:
+00002076                          1802          ;Set pen color
+00002076  7050                    1803          move.l      #PEN_COLOR_TRAP_CODE,d0
+00002078  4E4F                    1804          trap        #15
+0000207A                          1805          
+0000207A                          1806          ;draw pixel
+0000207A  2203                    1807          move.l      d3,d1
+0000207C  7052                    1808          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+0000207E  4E4F                    1809          trap        #15
+00002080                          1810  
+00002080  5283                    1811          addi.l      #1,d3
+00002082  0685 FFFFFFFF           1812          addi.l      #-1,d5
+00002088  6600 0338               1813          bne         DrawNonPaletteLoop       
+0000208C  260B                    1814          move.l      a3,d3
+0000208E  2A0C                    1815          move.l      a4,d5
+00002090  D1CE                    1816          add.l       a6,a0
+00002092  1C07                    1817          move.b      d7,d6
+00002094  0682 FFFFFFFF           1818          addi.l      #-1,d2
+0000209A  0684 FFFFFFFF           1819          addi.l      #-1,d4
+000020A0  6600 0320               1820          bne         DrawNonPaletteLoop
+000020A4                          1821          
+000020A4  4E75                    1822          rts
+000020A6                          1823               
+000020A6                          1824  ;Bitmap      INCBIN "ancient-city-in-the-desert-background-bmp-color-table.bmp"
+000020A6                          1825  Dropper     INCBIN "Dropper.bmp"
+Line 1826 ERROR: Symbol value differs between first and second pass
+000020A6                          1826  Dropper     INCBIN "Dropper.bmp"
+000021B2                          1827  Bitmap      INCBIN "FinalBackground.bmp"
+Line 1828 ERROR: Symbol value differs between first and second pass
+000021B2                          1828  Bitmap      INCBIN "FinalBackground.bmp"
+0004D222                          1829  YouLose     INCBIN "YouLost.bmp"
+Line 1830 ERROR: Symbol value differs between first and second pass
+0004D222                          1830  YouLose     INCBIN "YouLost.bmp"
+0004DFDC                          1831  YouWin      INCBIN "YouWon.bmp"
+Line 1832 ERROR: Symbol value differs between first and second pass
+0004DFDC                          1832  YouWin      INCBIN "YouWon.bmp"
+0004EE12                          1833  
+0004EE12                          1834  
+0004EE12                          1835  
+0004EE12                          1836  
+0004EE12                          1837  
+0004EE12                          1838  
+0004EE12                          1839  
+0004EE12                          1840  
+0004EE12                          1841  
+0004EE12                          1842  
+0004EE12                          1843  
+0004EE12                          1844  
+0004EE12                          1845  
+0004EE12                          1846  
+0004EE12                          1847  
+0004EE12                          1848  -------------------- end include --------------------
+0004EE12                          1849          INCLUDE "RandomNumbers.x68"
+0004EE12  =00000008               1850  GET_TIME_COMMAND        equ     8
+0004EE12                          1851  
+Line 1852 ERROR: Symbol value differs between first and second pass
+0004EE12                          1852  seedRandomNumber
+0004EE12  48E7 FFFE               1853          movem.l ALL_REG,-(sp)
+0004EE16  4286                    1854          clr.l   d6
+0004EE18  103C 0008               1855          move.b  #GET_TIME_COMMAND,d0
+0004EE1C  4E4F                    1856          TRAP    #15
+0004EE1E                          1857  
+0004EE1E  23C1 0004F206           1858          move.l  d1,RANDOMVAL
+0004EE24  4CDF 7FFF               1859          movem.l (sp)+,ALL_REG
+0004EE28  4E75                    1860          rts
+0004EE2A                          1861  
+Line 1862 ERROR: Symbol value differs between first and second pass
+0004EE2A                          1862  getRandomByteIntoD6
+0004EE2A  48E7 8000               1863          movem.l d0,-(sp)
+0004EE2E  48E7 4000               1864          movem.l d1,-(sp)
+0004EE32  48E7 2000               1865          movem.l d2,-(sp)
+0004EE36  2039 0004F206           1866          move.l  RANDOMVAL,d0
+0004EE3C  72AF                    1867          moveq   #$AF-$100,d1
+0004EE3E  7412                    1868          moveq   #18,d2
+Line 1869 ERROR: Symbol value differs between first and second pass
+0004EE40                          1869  Ninc0   
+0004EE40  D080                    1870          add.l   d0,d0
+0004EE42  6400 036A               1871          bcc     Ninc1
+0004EE46  B300                    1872          eor.b   d1,d0
+Line 1873 ERROR: Symbol value differs between first and second pass
+0004EE48                          1873  Ninc1
+0004EE48  51CA 035C               1874          dbf     d2,Ninc0
+0004EE4C                          1875          
+0004EE4C  23C0 0004F206           1876          move.l  d0,RANDOMVAL
+0004EE52  4286                    1877          clr.l   d6
+0004EE54  1C00                    1878          move.b  d0,d6
+0004EE56                          1879          
+0004EE56  4CDF 0004               1880          movem.l (sp)+,d2
+0004EE5A  4CDF 0002               1881          movem.l (sp)+,d1
+0004EE5E  4CDF 0001               1882          movem.l (sp)+,d0
+0004EE62  4E75                    1883          rts
+0004EE64                          1884          
+0004EE64                          1885  
+Line 1886 ERROR: Symbol value differs between first and second pass
+0004EE64                          1886  getRandomLongIntoD6
+0004EE64  48E7 FFFE               1887          movem.l ALL_REG,-(sp)
+0004EE68  4EB9 0004F190           1888          jsr     getRandomByteIntoD6
+0004EE6E  1A06                    1889          move.b  d6,d5
+0004EE70  4EB9 0004F190           1890          jsr     getRandomByteIntoD6
+0004EE76  E18D                    1891          lsl.l   #8,d5
+0004EE78  1A06                    1892          move.b  d6,d5
+0004EE7A  4EB9 0004F190           1893          jsr     getRandomByteIntoD6
+0004EE80  E18D                    1894          lsl.l   #8,d5
+0004EE82  1A06                    1895          move.b  d6,d5
+0004EE84  4EB9 0004F190           1896          jsr     getRandomByteIntoD6
+0004EE8A  E18D                    1897          lsl.l   #8,d5
+0004EE8C  1A06                    1898          move.b  d6,d5
+0004EE8E  23C5 0004F20A           1899          move.l  d5,TEMPRANDOMLONG
+0004EE94  4CDF 7FFF               1900          movem.l (sp)+,ALL_REG
+0004EE98  2C39 0004F20A           1901          move.l  TEMPRANDOMLONG,d6
+0004EE9E  4E75                    1902          rts
+0004EEA0                          1903  
+0004EEA0                          1904  
+Line 1905 ERROR: Symbol value differs between first and second pass
+0004EEA0                          1905  RANDOMVAL       ds.l    1
+Line 1906 ERROR: Symbol value differs between first and second pass
+0004EEA0                          1906  TEMPRANDOMLONG  ds.l    1
+0004EEA0                          1907  
+0004EEA0                          1908          END     START
+0004EEA0                          1909  -------------------- end include --------------------
+
+144 errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+ACTIVEBOSSBULLET    1538
+ACTIVEBULLETS       2221
+ACTIVEBULLETSFOUND  1C58
+ACTIVESEGMENTFOUND  1302
+ALLBOSSBULLETCHECKED  1552
+ALLBOSSBULLETDRAWN  1CE0
+ALLBOSSBULLETERASED  1D56
+ALLBOSSBULLETSUPDATED  1C6C
+ALLOWEDBULLETS      2220
+ALLPLAYERBULLETCHECKED  149C
+ALLSEGMENTSUPDATED  131A
+ALL_REG             7FFF
+BACKGROUND_IMG_HEIGHT  1E0
+BACKGROUND_IMG_WIDTH  280
+BITMAP              2518
+BITMAP_COLOR_ARRAY_OFFSET  36
+BITMAP_HEADER_FIELD  424D
+BITMAP_HEIGHT_OFFSET  16
+BITMAP_NUM_OF_COLOR_IN_PALETTE  2E
+BITMAP_PIXEL_ARRAY_OFFSET  A
+BITMAP_WIDTH_OFFSET  12
+BLACK               0
+BLACK_BOX_BOTTOM_SIDE_OF_SCREEN  190
+BLACK_BOX_LEFT_SIDE_OF_SCREEN  1E
+BLACK_BOX_RIGHT_SIDE_OF_SCREEN  262
+BLACK_BOX_TOP_SIDE_OF_SCREEN  2D
+BOSSBULLETARRAY     194E
+BOSSBULLETDIDNOTCOLLIDE  15BE
+BOSSBULLETFOUND     1820
+BOSSBULLETSACTIVE   1949
+BOSSBULLETSLEFTTOSHOOT  1948
+BOSSCOLOR           1944
+BOSSDIDNOTCOLLIDE   145A
+BOSSHEALTH          15C0
+BOSSONGROUND        193E
+BOSSPOSITIONANDSIZE  192A
+BOSSRAINACTIVE      1AFF
+BOSSRAINARRAY       1B00
+BOSSRAINLEFTTOSHOOT  1AFE
+BOSSREACHBOTTOMUPDATE  18FA
+BOSSREACHFLOOR      1648
+BOSSREACHLEFTSIDE   18C2
+BOSSREACHRIGHTSIDE  18CE
+BOSSSHOOTBULLETDONE  188A
+BOSSSHOOTLEFT       1842
+BOSSSHOOTRIGHT      185E
+BOSSSHOTDONE        187A
+BOSSSHOULDFACERIGHT  1942
+BOSSSTATE           1943
+BOSSSTATEUPDATEDONE  1632
+BOSSTIMETOSHOOT     194A
+BOSSVELOCITYX       193A
+BOSSVELOCITYY       193C
+BOSS_BULLET_COLOR   FFFF00
+BOSS_BULLET_COUNT_SHOT  3
+BOSS_BULLET_DATA_SIZE_IN_BYTES  12
+BOSS_BULLET_HEIGHT  A
+BOSS_BULLET_SPEED   300
+BOSS_BULLET_WIDTH   A
+BOSS_GRAVITY_SIZE   30
+BOSS_HEIGHT         28
+BOSS_JUMP_DAMAGE    19
+BOSS_MAX_BULLETS    6
+BOSS_MAX_RAIN       4
+BOSS_SHOOT_DAMAGE   F
+BOSS_SHOT_HEIGHT_OFFSET  19
+BOSS_START_HEALTH   FF
+BOSS_TIME_BETWEEN_SHOT  64
+BOSS_TIME_TO_JUMP_AND_FALL  2A
+BOSS_VELOCITY_UP    800
+BOSS_WIDTH          28
+BOTTOM_SIDE_OF_SCREEN  190
+BULLETDIDNOTCOLLIDE  1510
+BULLETONEPOSITION   2222
+BULLETONESPEED      222A
+BULLETSETNEGATIVESPEED  2006
+BULLETSETPOSITIVESPEED  201A
+BULLETSFULL         2032
+BULLETTHREEPOSITION  2236
+BULLETTHREESPEED    223E
+BULLETTWOPOSITION   222C
+BULLETTWOSPEED      2234
+BULLET_COLOR        FFFFFF
+BULLET_DRAW_SIZE_WIDTH  C
+BULLET_SIZE_HEIGHT  A
+BULLET_SIZE_WIDTH   A
+BULLET_SPEED        300
+CALCULATETIMELEFT   1384
+CHANGECOLORDONE     16BE
+CHECKACTIVEBULLET   1482
+CHECKBOSSBULLETCOLLISIONATA6  1554
+CHECKBOSSBULLETS    1512
+CHECKBOSSBULLETSLOOP  151A
+CHECKBOSSSTATE      1600
+CHECKCOLLISION      13C2
+CHECKGAMESTATUS     10BE
+CHECKPLAYERANDBOSSCOLLISION  13D6
+CHECKPLAYERBULLET   145C
+CHECKPLAYERBULLETCOLLISIONATA6  149E
+CHECKPLAYERBULLETLOOP  1464
+CLEARSCREEN         118C
+CLEARSEGMENTS       135A
+CLEAR_SCREEN_COMMAND  B
+CLEAR_SCREEN_MAGIC_VAL  FF00
+CREATEBULLETS       1F88
+CREATEFIRSTBULLET   1F8E
+CREATESECONDBULLET  1FB6
+CREATETHIRDBULLET   1FDE
+DEBOUNCEONETIME     2240
+DEBOUNCEUPTIME      1F4A
+DEBOUNCE_TIME       19
+DELETEBOSSBULLET    1C9E
+DELTATIME           122A
+DESTORYONEBULLET    207E
+DESTORYTHIRDBULLET  2112
+DESTORYTWOBULLET    20C8
+DOUBLE_BUFFERED_MODE  11
+DOWNINPUT           1E06
+DRAWACTIVEBOSSBULLETFOUND  1CC6
+DRAWACTIVEBOSSBULLETLOOP  1CAA
+DRAWACTIVESEGMENT   131C
+DRAWBACKGROUNDBITMAP  1130
+DRAWBITMAP          224C
+DRAWBOSS            164A
+DRAWBOSSBULLETS     1CA4
+DRAWBULLETS         2122
+DRAWDONEBOSS        16E8
+DRAWDROPPERS        11C2
+DRAWFIRSTBULLET     2142
+DRAWGAMEOBJECTS     116C
+DRAWING_MODE_TRAP_CODE  5C
+DRAWNONPALETTE      2352
+DRAWNONPALETTEDRAWER  23E0
+DRAWNONPALETTEEVEN  23C8
+DRAWNONPALETTELOOP  23C2
+DRAWNONPALETTEODD   23D6
+DRAWONEPOINTPALETTE  22D8
+DRAWPALETTE         226A
+DRAWPALETTELOOP     22FC
+DRAWPLAYER          1EBA
+DRAWSECONDBULLET    215A
+DRAWSEGMENT         12C2
+DRAWSPECIFICBOSSBULLETATA6  1CE2
+DRAWSPECIFICBULLETATA6  218C
+DRAWTHIRDBULLET     2172
+DRAWTIMELEFT        1264
+DRAW_CIRCLE_COMMAND  58
+DRAW_PIXEL_TRAP_CODE  52
+DRAW_RECT_COMMAND   57
+DROPPER             240C
+EMPTYLONG           1260
+ENDDRAWBULLETS      218A
+ENDTIME             1232
+ERASEACTIVEBOSSBULLETFOUND  1D36
+ERASEACTIVEBOSSBULLETLOOP  1D1C
+ERASEBOSS           16EA
+ERASEBOSSBULLETS    1D16
+ERASEBULLETDONE     221E
+ERASEBULLETS        21AA
+ERASECALL           21F4
+ERASEDSPECIFICBOSSBULLETATA6  1D58
+ERASEFIRSTBULLET    21AA
+ERASEPLAYER         1EF2
+ERASESECONDBULLET   21C2
+ERASETHIRDBULLET    21DA
+FINDACTIVEBOSSBULLETLOOP  1C42
+FINDACTIVESEGMENTSLOOP  12EE
+FINDOPENBOSSBULLETLOOP  1808
+FINISHINNERLOOPPALETTE  2338
+FINISHUPDATINGBOSSX  18D4
+FINISHUPDATINGPLAYERX  1E80
+FINSIHEDSTATEONE    188C
+FULL_ACTIVE_BULLETS  7
+GAMELOOP            1092
+GAMEOVER            10F2
+GAMEOVERBOSSKILLED  123A
+GAMEOVERLOOP        1102
+GAMEOVERPLAYERKILLED  1242
+GAMEOVERTIMERANOUT  124B
+GETDELTATIME        1116
+GETNEWSTATE         1616
+GETRANDOMBYTEINTOD6  4F190
+GETRANDOMLONGINTOD6  4F1CA
+GET_KEY_INPUT_D1_ULDR  26252827
+GET_KEY_INPUT_D1___R  52
+GET_KEY_INPUT_D1____SP  20
+GET_KEY_INPUT_TRAP_CODE  13
+GET_TIME_COMMAND    8
+GET_TIME_SINCE_MIDNIGHT  8
+GRAVITY_SIZE        40
+LEFTINPUT           1DB0
+LEFT_SIDE_OF_SCREEN  1E
+LONG_LENGTH_IN_BYTES  4
+MAX_ALLOWED_BULLETS  3
+MOVEINPUTDONE       1E0E
+NINC0               4F1A6
+NINC1               4F1AE
+OLDTIME             122E
+ONEBUTTONSPRESSED   1F58
+OTHERINPUTDONE      1F80
+OUTPUT_HEIGHT       1E0
+OUTPUT_WIDTH        280
+PALETTEEVENORODD    22D2
+PEN_COLOR_TRAP_CODE  50
+PLAYERCOLOR         1F4E
+PLAYERHEALTH        15C4
+PLAYERJUMPCOUNTER   1F46
+PLAYERLOOKINGRIGHT  1F42
+PLAYERMOVEMENT      1F3A
+PLAYERONGROUND      1F3E
+PLAYERPOSITIONANDSIZE  1F2A
+PLAYERREACHBOTTOMUPDATE  1EA6
+PLAYERREACHFLOOR    1E32
+PLAYERREACHLEFTSIDE  1E6E
+PLAYERREACHRIGHTSIDE  1E7A
+PLAYERVULNERABILITYTIME  15C8
+PLAYER_BULLET_DAMAGE  A
+PLAYER_HEIGHT       14
+PLAYER_INVULNERABILITY_TIME  96
+PLAYER_START_HEALTH  FF
+PLAYER_VELOCITY     200
+PLAYER_VELOCITY_UP  680
+PLAYER_WIDTH        14
+RANDOMVAL           4F206
+REPAINT_SCREEN_TRAP_CODE  5E
+RESETGAME           1114
+RIGHTINPUT          1D9A
+RIGHT_SIDE_OF_SCREEN  262
+SEEDRANDOMNUMBER    4F178
+SEGMENTBITS         139C
+SEGMENTXEND         13B4
+SEGMENTXSTART       13A6
+SEGMENTYEND         13BB
+SEGMENTYSTART       13AD
+SETSTATEFOUR        17DA
+SETSTATEONE         1722
+SETSTATETABLE       1C20
+SETSTATETHREE       1794
+SETSTATETWO         173E
+SETSTATETWOFACELEFT  175E
+SETSTATETWOFACERIGHT  1764
+SETSTATETWOOFFSET   1768
+SET_FILL_COLOR_COMMAND  51
+SET_OUTPUT_RESOLUTION_TRAP_CODE  21
+SET_PEN_COLOR_COMMAND  50
+STACK_ARGUMENT_FIVE  14
+STACK_ARGUMENT_FOUR  10
+STACK_ARGUMENT_ONE  4
+STACK_ARGUMENT_SEVEN  1C
+STACK_ARGUMENT_SIX  18
+STACK_ARGUMENT_THREE  C
+STACK_ARGUMENT_TWO  8
+START               1000
+START_X_TIME_LEFT   24E
+START_Y_TIME_LEFT   3C
+STATEFOURDRAW       16B2
+STATEONEDRAW        168E
+STATETHREEDRAW      16A6
+STATETWODRAW        169A
+STATEZERODRAW       1682
+SWAPBUFFERS         11BA
+TEMPRANDOMLONG      4F20A
+TIMELEFT            1236
+TIME_TO_KILL_BOSS   78
+TURNADDRESSTOBIGENDIAN  2244
+UPDATEBOSS          15CC
+UPDATEBOSSBULLETS   1C40
+UPDATEBOSSLOOKDONE  15F4
+UPDATEBOSSLOOKLEFT  15EC
+UPDATEBOSSLOOKRIGHT  15DE
+UPDATEBULLETEND     2120
+UPDATEBULLETONE     2044
+UPDATEBULLETS       1F52
+UPDATEBULLETSPOSITIONS  2034
+UPDATEBULLETTHREE   20D6
+UPDATEBULLETTWO     208C
+UPDATEGAMEOBJECTS   114C
+UPDATEPLAYER        1D8A
+UPDATEPLAYERINFO    1E48
+UPDATESPECIFICBOSSBULLET  1C6E
+UPDATESTATEFOUR     1920
+UPDATESTATEONE      17E4
+UPDATESTATETABLE    1C30
+UPDATESTATETHREE    1916
+UPDATESTATETWO      1896
+UPINPUT             1DC8
+WHITE               FFFFFF
+X_SEGMENT_OFFSET    C
+YOULOSE             4D588
+YOUWIN              4E342

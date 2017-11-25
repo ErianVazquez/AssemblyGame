@@ -1,0 +1,630 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 10/17/2017 3:47:25 PM
+
+00000000  =00000190                  1  BOSS_START_X                        EQU 400
+00000000  =00000028                  2  BOSS_WIDTH                          EQU 40
+00000000  =00000028                  3  BOSS_HEIGHT                         EQU 40
+00000000                             4  
+00000000  =00000800                  5  BOSS_VELOCITY_UP                    EQU $800
+00000000  =00000030                  6  BOSS_GRAVITY_SIZE                   EQU $30
+00000000  =0000002A                  7  BOSS_TIME_TO_JUMP_AND_FALL          EQU (BOSS_VELOCITY_UP/BOSS_GRAVITY_SIZE)
+00000000                             8  
+00000000  =00FFFF00                  9  BOSS_BULLET_COLOR                   EQU $00FFFF00
+00000000                            10  
+00000000  =00000300                 11  BOSS_BULLET_SPEED                   EQU $300
+00000000  =00000032                 12  BOSS_TIME_BETWEEN_SHOT              EQU 50
+00000000  =00000003                 13  BOSS_BULLET_COUNT_SHOT              EQU 3
+00000000  =0000000A                 14  BOSS_BULLET_WIDTH                   EQU 10
+00000000  =0000000A                 15  BOSS_BULLET_HEIGHT                  EQU 10
+00000000  =00000019                 16  BOSS_SHOT_HEIGHT_OFFSET             EQU 25
+00000000                            17  
+00000000  =00000006                 18  BOSS_MAX_BULLETS                    EQU 6
+00000000  =00000004                 19  BOSS_MAX_RAIN                       EQU 4
+00000000  =0000000A                 20  BOSS_BULLET_DATA_SIZE_IN_BYTES      EQU 10
+00000000  =00000012                 21  BOSS_RAIN_DATA_SIZE_IN_BYTES        EQU 18
+00000000                            22  
+00000000  =0000000A                 23  BOSS_WAIT_TIME                      EQU 10
+00000000                            24  
+00000000  =00000200                 25  BOSS_LAVA_FILL_RATE                 EQU 4<<7
+00000000                            26  
+00000000                            27  UpdateBoss
+00000000                            28          
+00000000  2039 000004B4             29          move.l          (BossPositionAndSize),d0
+Line 30 ERROR: Undefined symbol
+00000006  2239 004DBB8E             30          move.l          (PlayerPositionAndSize),d1 
+0000000C  B280                      31          cmp.l           d0,d1
+0000000E  6D00 0010                 32          blt             UpdateBossLookLeft        
+00000012                            33  UpdateBossLookRight        
+00000012  13FC 0001 000004CC        34          move.b          #1,(BossShouldFaceRight)
+0000001A  4EF9 00000028             35          jmp             UpdateBossLookDone
+00000020                            36  UpdateBossLookLeft
+00000020  13FC 0000 000004CC        37          move.b          #0,(BossShouldFaceRight)
+00000028                            38          
+00000028                            39  UpdateBossLookDone
+00000028  7000                      40          moveq.l         #0,d0
+0000002A  1039 000004CD             41          move.b          (BossState),d0
+00000030  6700 002E                 42          beq             GetNewState
+00000034                            43  
+00000034                            44  CheckBossState
+00000034                            45         
+Line 46 ERROR: Undefined symbol
+00000034  2839 004DBB8E             46          move.l          (OldTime),d4
+0000003A  2A39 000006F2             47          move.l          (BossTimeStateStart),d5
+00000040  6700 0008                 48          beq             DoState
+00000044  BA84                      49          cmp.l           d4,d5
+00000046  6E00 0046                 50          bgt             BossStateNeedsToWait
+0000004A                            51         
+0000004A                            52  DoState
+0000004A  41F9 00000706             53          lea             UpdateStateTable,a0
+00000050  5980                      54          sub.l           #4,d0
+00000052  2030 0000                 55          move.l          (a0,d0),d0
+00000056  2040                      56          move.l          d0,a0
+00000058  4E90                      57          jsr             (a0)
+0000005A  4EF9 00000090             58          jmp             BossStateUpdateDone
+00000060                            59          
+00000060                            60  GetNewState
+00000060                            61  
+Line 62 ERROR: Undefined symbol
+00000060  2A39 004DBB8E             62          move.l          (OldTime),d5
+00000066  0685 0000000A             63          add.l           #BOSS_WAIT_TIME,d5
+0000006C  23C5 000006F2             64          move.l          d5,(BossTimeStateStart)
+00000072                            65  
+Line 66 ERROR: Undefined symbol
+00000072  4EB9 004DBB8E             66          jsr             getRandomLongIntoD6
+00000078                            67  ;                move.l           #3,d6
+00000078  CCBC 00000003             68          and.l           #3,d6
+0000007E  E58E                      69          lsl.l           #2,d6
+00000080  41F9 000006F6             70          lea             SetStateTable,a0
+00000086  D1C6                      71          add.l           d6,a0
+00000088  2C10                      72          move.l          (a0),d6
+0000008A  2046                      73          move.l          d6,a0
+0000008C  4E90                      74          jsr             (a0)
+0000008E                            75          
+0000008E                            76  BossStateNeedsToWait
+0000008E  2A05                      77          move.l          d5,d5
+00000090                            78  BossStateUpdateDone
+00000090                            79          
+00000090  2039 000004C8             80          move.l          (BossOnGround),d0  
+00000096  6600 0010                 81          bne             BossReachFloor
+Line 82 ERROR: Undefined symbol
+0000009A  2039 004DBB8E             82          move.l          (DeltaTime),d0
+Line 83 ERROR: Undefined symbol
+000000A0  C1FC BB8E                 83          muls            #GRAVITY_SIZE,d0
+000000A4  D16E 0012                 84          add.w           d0,18(a6)
+000000A8                            85  BossReachFloor
+000000A8                            86  
+000000A8  4E75                      87          rts
+000000AA                            88  
+000000AA                            89  DrawBoss
+000000AA  4DF9 000004B4             90          lea             BossPositionAndSize,a6
+000000B0                            91  
+Line 92 ERROR: Undefined symbol
+000000B0  2239 004DBB8E             92          move.l          (BossHealth),d1
+000000B6  6B00 009A                 93          bmi             DrawDoneBoss
+000000BA                            94  
+000000BA  7400                      95          moveq.l         #0,d2
+000000BC  2239 000004CE             96          move.l          (BossColor),d1
+000000C2  1439 000004CD             97          move.b          (BossState),d2
+000000C8  6700 001A                 98          beq             StateZeroDraw
+000000CC  5902                      99          sub.b           #4,d2
+000000CE  6700 0020                100          beq             StateOneDraw
+000000D2  5902                     101          sub.b           #4,d2
+000000D4  6700 0026                102          beq             StateTwoDraw
+000000D8  5902                     103          sub.b           #4,d2
+000000DA  6700 002C                104          beq             StateThreeDraw
+000000DE  5902                     105          sub.b           #4,d2
+000000E0  6700 0032                106          beq             StateFourDraw
+000000E4                           107  StateZeroDraw
+000000E4  C2BC 00FFFFFF            108          and.l           #$FFFFFF,d1
+000000EA  4EF9 00000120            109          jmp             ChangeColorDone
+000000F0                           110  StateOneDraw
+000000F0  C2BC 00FF0000            111          and.l           #$FF0000,d1       
+000000F6  4EF9 00000120            112          jmp             ChangeColorDone
+000000FC                           113  StateTwoDraw
+000000FC  C2BC 0000FF00            114          and.l           #$00FF00,d1
+00000102  4EF9 00000120            115          jmp             ChangeColorDone
+00000108                           116  StateThreeDraw
+00000108  C2BC 000000FF            117          and.l           #$0000FF,d1
+0000010E  4EF9 00000120            118          jmp             ChangeColorDone
+00000114                           119  StateFourDraw
+00000114  C2BC 00FF00FF            120          and.l           #$FF00FF,d1
+0000011A  4EF9 00000120            121          jmp             ChangeColorDone
+00000120                           122  ChangeColorDone
+00000120                           123  
+Line 124 ERROR: Undefined symbol
+00000120  203C 004DBB8E            124          move.l          #SET_PEN_COLOR_COMMAND,d0
+00000126  4E4F                     125          trap            #15
+Line 126 ERROR: Undefined symbol
+00000128  203C 004DBB8E            126          move.l          #SET_FILL_COLOR_COMMAND,d0
+0000012E  4E4F                     127          trap            #15
+00000130                           128  
+Line 129 ERROR: Undefined symbol
+00000130  103C 008E                129          move.b          #DRAW_CIRCLE_COMMAND,d0
+00000134  2216                     130          move.l          (a6),d1 
+00000136  E089                     131          lsr.l           #8,d1
+00000138  242E 0004                132          move.l          4(a6),d2
+0000013C  E08A                     133          lsr.l           #8,d2
+0000013E  262E 0008                134          move.l          8(a6),d3
+00000142  D696                     135          add.l           (a6),d3
+00000144  E08B                     136          lsr.l           #8,d3
+00000146  282E 000C                137          move.l          12(a6),d4
+0000014A  D8AE 0004                138          add.l           4(a6),d4
+0000014E  E08C                     139          lsr.l           #8,d4   
+00000150  4E4F                     140          trap            #15
+00000152                           141  
+00000152                           142  DrawDoneBoss
+00000152  4E75                     143          rts
+00000154                           144          
+00000154                           145  EraseBoss: ;a6 memory location of x,y,w,h,v_x,v_y
+00000154                           146         
+00000154  4DF9 000004B4            147          lea             BossPositionAndSize,a6
+0000015A  2016                     148          move.l          (a6),d0
+0000015C  E088                     149          lsr.l           #8,d0
+0000015E  5380                     150          sub.l           #1,d0
+00000160  222E 0004                151          move.l          4(a6),d1
+00000164  E089                     152          lsr.l           #8,d1
+00000166  0481 FFFFFFFF            153          sub.l           #-1,d1
+0000016C  242E 0008                154          move.l          8(a6),d2
+00000170  E08A                     155          lsr.l           #8,d2
+Line 156 ERROR: Undefined symbol
+00000172  41F9 004DBB8E            156          lea.l           Bitmap, a0
+00000178  2000                     157          move.l          d0,d0
+0000017A  2201                     158          move.l          d1,d1
+0000017C  2602                     159          move.l          d2,d3
+0000017E  5482                     160          add.l           #2,d2
+00000180  2402                     161          move.l          d2,d2
+00000182  2800                     162          move.l          d0,d4
+00000184  2A01                     163          move.l          d1,d5
+00000186                           164          
+Line 165 ERROR: Undefined symbol
+00000186  4EB9 004DBB8E            165          jsr DrawBackgroundBitmap
+0000018C                           166          
+0000018C  4E75                     167          rts
+0000018E                           168  
+0000018E                           169  SetStateOne
+0000018E  13FC 0003 000004D2       170          move.b          #BOSS_BULLET_COUNT_SHOT,(BossBulletsLeftToShoot)
+Line 171 ERROR: Undefined symbol
+00000196  2E39 004DBB8E            171          move.l          (OldTime),d7
+0000019C  23C7 000004D4            172          move.l          d7,(BossTimeToShoot)
+000001A2                           173                  
+000001A2  13FC 0004 000004CD       174          move.b          #4,(BossState)
+000001AA  4E75                     175          rts
+000001AC                           176  SetStateTwo
+000001AC                           177  
+Line 178 ERROR: Undefined symbol
+000001AC  41F9 004DBB8E            178          lea             PlayerPositionAndSize,a0
+000001B2                           179  
+000001B2  2010                     180          move.l          (a0),d0
+000001B4  2228 0008                181          move.l          8(a0),d1
+000001B8  E281                     182          asr.l           #1,d1
+000001BA  D081                     183          add.l           d1,d0
+000001BC  41F9 000004B4            184          lea             BossPositionAndSize,a0
+000001C2  2210                     185          move.l          (a0),d1
+000001C4                           186          
+000001C4  1439 000004CC            187          move.b          (BossShouldFaceRight),d2
+000001CA  6606                     188          bne.b           SetStateTwoFaceRight
+000001CC                           189  SetStateTwoFaceLeft
+000001CC  4EF9 000001D6            190          jmp             SetStateTwoOffset
+000001D2                           191  SetStateTwoFaceRight
+000001D2  D2A8 0008                192          add.l           8(a0),d1
+000001D6                           193  SetStateTwoOffset
+000001D6                           194          
+000001D6  9280                     195          sub.l           d0,d1
+000001D8  2001                     196          move.l          d1,d0
+000001DA  E280                     197          asr.l           #1,d0
+000001DC  D280                     198          add.l           d0,d1
+000001DE  83FC FFD6                199          divs            #-BOSS_TIME_TO_JUMP_AND_FALL,d1    
+000001E2  E241                     200          asr.w           #1,d1
+000001E4  33C1 000004C4            201          move.w          d1,(BossVelocityX)
+000001EA                           202        
+000001EA  33FC F800 000004C6       203          move.w          #-BOSS_VELOCITY_UP,(BossVelocityY)
+000001F2                           204  
+000001F2  13FC 0008 000004CD       205          move.b          #8,(BossState)
+000001FA                           206          
+000001FA                           207          ;jsr             UpdateStateTwo
+000001FA                           208          
+000001FA  4E75                     209          rts 
+000001FC                           210  SetStateThree
+000001FC                           211  
+000001FC  7000                     212          moveq.l         #0,d0
+000001FE  1039 000005C9            213          move.b          (BossRainActive),d0
+00000204  6600 00BE                214          bne             FinishSetStateThree 
+00000208                           215  
+00000208  08F9 0000 000005C9       216          bset            #0,(BossRainActive)
+00000210  08F9 0001 000005C9       217          bset            #1,(BossRainActive)
+00000218  08F9 0002 000005C9       218          bset            #2,(BossRainActive)
+00000220  08F9 0003 000005C9       219          bset            #3,(BossRainActive)
+00000228                           220  
+Line 221 ERROR: Invalid syntax
+00000228                           221          move.l          #DROPPER_Y<<8+DROPPER_HEIGHT<<8,d0
+00000228                           222  
+00000228  41F9 000005CA            223          lea             BossRainArray,a0
+0000022E                           224  
+Line 225 ERROR: Invalid syntax
+0000022E                           225          move.l          #DROPPER_ONE_X+DROPPER_WIDTH/2,(a0)
+Line 226 ERROR: Invalid syntax
+0000022E                           226          move.l          #DROPPER_TWO_X+DROPPER_WIDTH/2,18(a0)
+Line 227 ERROR: Invalid syntax
+0000022E                           227          move.l          #DROPPER_THREE_X+DROPPER_WIDTH/2,36(a0)
+Line 228 ERROR: Invalid syntax
+0000022E                           228          move.l          #DROPPER_FOUR_X+DROPPER_WIDTH/2,54(a0)   
+0000022E                           229  
+0000022E  2140 0004                230          move.l          d0,4(a0)
+00000232  2140 0016                231          move.l          d0,22(a0)
+00000236  2140 0028                232          move.l          d0,40(a0)
+0000023A  2140 003A                233          move.l          d0,58(a0)
+0000023E                           234          
+Line 235 ERROR: Undefined symbol
+0000023E  217C 004DBB8E 0008       235          move.l          #DROP_SIZE_INCREASE,8(a0)
+Line 236 ERROR: Undefined symbol
+00000246  217C 004DBB8E 001A       236          move.l          #DROP_SIZE_INCREASE,26(a0)
+Line 237 ERROR: Undefined symbol
+0000024E  217C 004DBB8E 002C       237          move.l          #DROP_SIZE_INCREASE,44(a0)
+Line 238 ERROR: Undefined symbol
+00000256  217C 004DBB8E 003E       238          move.l          #DROP_SIZE_INCREASE,62(a0)
+Line 239 ERROR: Undefined symbol
+0000025E  217C 004DBB8E 000C       239          move.l          #DROP_SIZE_INCREASE,12(a0)
+Line 240 ERROR: Undefined symbol
+00000266  217C 004DBB8E 001E       240          move.l          #DROP_SIZE_INCREASE,30(a0)
+Line 241 ERROR: Undefined symbol
+0000026E  217C 004DBB8E 0030       241          move.l          #DROP_SIZE_INCREASE,48(a0)
+Line 242 ERROR: Undefined symbol
+00000276  217C 004DBB8E 0042       242          move.l          #DROP_SIZE_INCREASE,66(a0) 
+0000027E                           243  
+Line 244 ERROR: Undefined symbol
+0000027E  317C BB8E 0010           244          move.w          #INIITAL_DROP_SPEED,16(a0)
+Line 245 ERROR: Undefined symbol
+00000284  317C BB8E 0022           245          move.w          #INIITAL_DROP_SPEED,34(a0)
+Line 246 ERROR: Undefined symbol
+0000028A  317C BB8E 0034           246          move.w          #INIITAL_DROP_SPEED,52(a0)
+Line 247 ERROR: Undefined symbol
+00000290  317C BB8E 0046           247          move.w          #INIITAL_DROP_SPEED,70(a0)
+00000296                           248  
+00000296  13FC 000C 000004CD       249          move.b          #12,(BossState)
+0000029E  4E75                     250          rts
+Line 251 ERROR: Symbol value differs between first and second pass
+000002A0                           251  FinishSetStateThree 
+000002A0  13FC 0000 000004CD       252          move.b          #0,(BossState)
+000002A8  4E75                     253          rts
+Line 254 ERROR: Symbol value differs between first and second pass
+000002AA                           254  SetStateFour
+000002AA                           255  
+000002AA  23FC 00000000 000006EA   256          move.l          #0,(BossLavaFillPercent)
+000002B4  23FC 00000200 000006EE   257          move.l          #BOSS_LAVA_FILL_RATE,(BossLavaFillRate)
+000002BE                           258  
+000002BE  13FC 0010 000004CD       259          move.b          #16,(BossState)
+000002C6  4E75                     260          rts
+000002C8                           261  
+Line 262 ERROR: Symbol value differs between first and second pass
+000002C8                           262  UpdateStateOne
+000002C8                           263  
+000002C8  41F9 000004D2            264          lea             BossBulletsLeftToShoot,a0
+000002CE  7000                     265          moveq.l         #0,d0
+000002D0  1010                     266          move.b          (a0),d0
+000002D2  6700 00C4                267          beq             FinsihedStateOne    
+000002D6                           268      
+Line 269 ERROR: Undefined symbol
+000002D6  2E39 004DBB8E            269          move.l          (OldTime),d7
+000002DC  2C39 000004D4            270          move.l          (BossTimeToShoot),d6
+000002E2  BE86                     271          cmp.l           d6,d7
+000002E4  6D00 00B0                272          blt             BossShootBulletDone
+000002E8                           273      
+000002E8  5300                     274          sub.b           #1,d0
+000002EA  1080                     275          move.b          d0,(a0)
+000002EC                           276      
+000002EC  7000                     277          move.l          #0,d0
+000002EE                           278          
+Line 279 ERROR: Symbol value differs between first and second pass
+000002EE                           279  FindOpenBossBulletLoop
+000002EE  0139 000004D3            280          btst            d0,(BossBulletsActive)
+000002F4  6700 0034                281          beq             BossBulletFound
+000002F8  5200                     282          add.b           #1,d0
+000002FA  B03C 0006                283          cmp.b           #BOSS_MAX_BULLETS,d0
+000002FE  6E00 0098                284          bgt             FinsihedStateOne
+00000302  4EF8 0312                285          jmp             FindOpenBossBulletLoop
+00000306                           286  
+Line 287 ERROR: Symbol value differs between first and second pass
+00000306                           287  BossBulletFound
+00000306                           288  
+00000306  01F9 000004D3            289          bset            d0,(BossBulletsActive)
+0000030C                           290  
+0000030C  C0FC 000A                291          mulu            #BOSS_BULLET_DATA_SIZE_IN_BYTES,d0
+00000310  41F9 000004D8            292          lea             BossBulletArray,a0
+00000316  D1C0                     293          add.l           d0,a0
+00000318                           294          
+00000318  43F9 000004B4            295          lea             BossPositionAndSize,a1     
+0000031E  1039 000004CC            296          move.b          (BossShouldFaceRight),d0
+00000324  6600 0042                297          bne             BossShootRight
+Line 298 ERROR: Symbol value differs between first and second pass
+00000328                           298  BossShootLeft
+00000328  2091                     299          move.l          (a1),(a0)
+0000032A  2429 0004                300          move.l          4(a1),d2
+0000032E  0682 00001900            301          add.l           #BOSS_SHOT_HEIGHT_OFFSET<<8,d2
+00000334  2142 0004                302          move.l          d2,4(a0)   
+00000338  317C FD00 0008           303          move.w          #-BOSS_BULLET_SPEED,8(a0)
+0000033E  4EF9 00000384            304          jmp             BossShotDone
+Line 305 ERROR: Symbol value differs between first and second pass
+00000344                           305  BossShootRight
+00000344  2411                     306          move.l          (a1),d2
+00000346  D4A9 0008                307          add.l           8(a1),d2
+0000034A  2082                     308          move.l          d2,(a0)
+0000034C  2429 0004                309          move.l          4(a1),d2
+00000350  0682 00001900            310          add.l           #BOSS_SHOT_HEIGHT_OFFSET<<8,d2
+00000356  2142 0004                311          move.l          d2,4(a0)   
+0000035A  317C 0300 0008           312          move.w          #BOSS_BULLET_SPEED,8(a0)
+Line 313 ERROR: Symbol value differs between first and second pass
+00000360                           313  BossShotDone
+Line 314 ERROR: Undefined symbol
+00000360  2039 004DBB8E            314          move.l          (OldTime),d0
+00000366  0680 00000032            315          add.l           #BOSS_TIME_BETWEEN_SHOT,d0
+0000036C  23C0 000004D4            316          move.l          d0,(BossTimeToShoot)
+Line 317 ERROR: Symbol value differs between first and second pass
+00000372                           317  BossShootBulletDone
+00000372  4E75                     318          rts
+00000374                           319          
+Line 320 ERROR: Symbol value differs between first and second pass
+00000374                           320  FinsihedStateOne    
+00000374  13FC 0000 000004CD       321          move.b          #0,(BossState)
+0000037C  4E75                     322          rts
+0000037E                           323          
+Line 324 ERROR: Symbol value differs between first and second pass
+0000037E                           324  UpdateStateTwo
+0000037E  4DF9 000004B4            325          lea             BossPositionAndSize,a6
+00000384                           326          
+Line 327 ERROR: Undefined symbol
+00000384  2039 004DBB8E            327          move.l          (DeltaTime),d0
+0000038A  C1EE 0010                328          muls            16(a6),d0
+0000038E  D096                     329          add.l           (a6),d0
+Line 330 ERROR: Invalid syntax
+00000390                           330          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+00000390  6F00 003E                331          ble             BossReachLeftSide
+Line 332 ERROR: Invalid syntax
+00000394                           332          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BOSS_WIDTH<<8,d0
+00000394  6E00 0046                333          bgt             BossReachRightSide
+00000398  2C80                     334          move.l          d0,(a6)
+0000039A  4EF9 000003E2            335          jmp             FinishUpdatingBossX
+Line 336 ERROR: Symbol value differs between first and second pass
+000003A0                           336  BossReachLeftSide
+Line 337 ERROR: Invalid syntax
+000003A0                           337          move.l          #LEFT_SIDE_OF_SCREEN<<8,(a6)
+000003A0  4EF9 000003E2            338          jmp             FinishUpdatingBossX
+Line 339 ERROR: Symbol value differs between first and second pass
+000003A6                           339  BossReachRightSide
+Line 340 ERROR: Invalid syntax
+000003A6                           340          move.l          #RIGHT_SIDE_OF_SCREEN<<8-BOSS_WIDTH<<8,(a6)
+Line 341 ERROR: Symbol value differs between first and second pass
+000003A6                           341  FinishUpdatingBossX
+000003A6                           342                 
+Line 343 ERROR: Undefined symbol
+000003A6  2039 004DBB8E            343          move.l          (DeltaTime),d0
+000003AC  C1EE 0012                344          muls            18(a6),d0
+000003B0  D0AE 0004                345          add.l           4(a6),d0
+Line 346 ERROR: Invalid syntax
+000003B4                           346          cmp.l           #BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8,d0
+000003B4  6E00 0054                347          bgt             BossReachBottomUpdate
+000003B8  2D40 0004                348          move.l          d0,4(a6)
+000003BC  23FC 00000000 000004C8   349          move.l          #0,(BossOnGround)
+000003C6  4E75                     350          rts
+Line 351 ERROR: Symbol value differs between first and second pass
+000003C8                           351  BossReachBottomUpdate
+Line 352 ERROR: Invalid syntax
+000003C8                           352          move.l          #BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8,4(a6)
+000003C8  23FC 00000001 000004C8   353          move.l          #1,(BossOnGround)
+000003D2  13FC 0000 000004CD       354          move.b          #0,(BossState)
+000003DA  4E75                     355          rts
+000003DC                           356  
+Line 357 ERROR: Symbol value differs between first and second pass
+000003DC                           357  UpdateStateThree
+000003DC  41F9 000005CA            358          lea             BossRainArray,a0
+000003E2  2028 0008                359          move.l          8(a0),d0
+Line 360 ERROR: Undefined symbol
+000003E6  B0BC 004DBB8E            360          cmp.l           #DROP_SIZE,d0
+000003EC  6C00 004E                361          bge             FinishStateThree
+000003F0  4E75                     362          rts
+Line 363 ERROR: Symbol value differs between first and second pass
+000003F2                           363  FinishStateThree
+000003F2  13FC 0000 000004CD       364          move.b          #0,(BossState)
+000003FA  4E75                     365          rts
+Line 366 ERROR: Symbol value differs between first and second pass
+000003FC                           366  UpdateStateFour
+000003FC                           367  
+000003FC  2039 000006EA            368          move.l          (BossLavaFillPercent),d0
+00000402  2239 000006EE            369          move.l          (BossLavaFillRate),d1
+Line 370 ERROR: Undefined symbol
+00000408  2439 004DBB8E            370          move.l          (DeltaTime),d2
+0000040E  C3C2                     371          muls            d2,d1
+00000410  6B00 0052                372          bmi             FillRateIsNegative        
+00000414  4EF9 00000482            373          jmp             FillRateIsPositive
+Line 374 ERROR: Symbol value differs between first and second pass
+0000041A                           374  FillRateIsNegative
+0000041A                           375  
+0000041A  2E00                     376          move.l          d0,d7
+0000041C                           377  
+0000041C  D081                     378          add.l           d1,d0
+0000041E  23C0 000006EA            379          move.l          d0,(BossLavaFillPercent)
+00000424                           380          
+00000424  2C00                     381          move.l          d0,d6
+00000426                           382                 
+00000426  2039 000006EA            383          move.l          (BossLavaFillPercent),d0
+0000042C  6B00 0072                384          bmi             StateFourEnded
+00000430                           385  
+Line 386 ERROR: Undefined symbol
+00000430  4EB9 004DBB8E            386          jsr             EraseLava
+00000436                           387  
+00000436  4E75                     388          rts        
+00000438                           389  
+Line 390 ERROR: Symbol value differs between first and second pass
+00000438                           390  FillRateIsPositive
+00000438                           391          
+00000438  D081                     392          add.l           d1,d0
+0000043A  23C0 000006EA            393          move.l          d0,(BossLavaFillPercent)
+00000440                           394          
+00000440  B0BC 00006E00            395          cmp.l           #110<<8,d0
+00000446  6D00 0056                396          blt             DontSwapSign
+0000044A  23FC FFFFFE00 000006EE   397          move.l          #-BOSS_LAVA_FILL_RATE,(BossLavaFillRate)
+Line 398 ERROR: Symbol value differs between first and second pass
+00000454                           398  DontSwapSign
+00000454  4E75                     399          rts
+00000456                           400  
+Line 401 ERROR: Symbol value differs between first and second pass
+00000456                           401  StateFourEnded
+00000456  23FC 00000200 000006EE   402          move.l          #BOSS_LAVA_FILL_RATE,(BossLavaFillRate)
+00000460  13FC 0000 000004CD       403          move.b          #0,(BossState)
+00000468  4E75                     404          rts
+0000046A                           405                
+0000046A                           406          
+Line 407 ERROR: Symbol value differs between first and second pass
+0000046A=                          407  BossPositionAndSize         dc.l BOSS_START_X<<8,BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8-1<<8,BOSS_WIDTH<<8,BOSS_HEIGHT<<8
+Line 408 ERROR: Symbol value differs between first and second pass
+0000046A=                          408  BossVelocityX               dc.w 0
+Line 409 ERROR: Symbol value differs between first and second pass
+0000046A=                          409  BossVelocityY               dc.w 0
+Line 410 ERROR: Symbol value differs between first and second pass
+0000046A=                          410  BossOnGround                dc.l 0
+Line 411 ERROR: Symbol value differs between first and second pass
+0000046A=                          411  BossShouldFaceRight         dc.b 0
+Line 412 ERROR: Symbol value differs between first and second pass
+0000046A=                          412  BossState                   dc.b 8                        ;State 0 waiting for update, State 4 shooting, State 8 Jumping, State 12 Dropping, State 16 Flooding
+Line 413 ERROR: Symbol value differs between first and second pass
+0000046A=                          413  BossColor                   dc.l $00FFFFFF
+0000046A                           414  
+Line 415 ERROR: Symbol value differs between first and second pass
+0000046A=                          415  BossBulletsLeftToShoot      dc.b BOSS_BULLET_COUNT_SHOT
+Line 416 ERROR: Symbol value differs between first and second pass
+0000046A=                          416  BossBulletsActive           dc.b 0
+Line 417 ERROR: Symbol value differs between first and second pass
+0000046A=                          417  BossTimeToShoot             dc.l 0
+Line 418 ERROR: Symbol value differs between first and second pass
+0000046A                           418  BossBulletArray             ds.l BOSS_MAX_BULLETS*BOSS_BULLET_DATA_SIZE_IN_BYTES
+0000046A                           419  *BossBulletOnePosition       dc.l 0<<8,0<<8
+0000046A                           420  *BossBulletOneSpeed          dc.l 0
+0000046A                           421  
+Line 422 ERROR: Symbol value differs between first and second pass
+0000046A=                          422  BossRainLeftToShoot         dc.b BOSS_MAX_RAIN
+Line 423 ERROR: Symbol value differs between first and second pass
+0000046A=                          423  BossRainActive              dc.b 0
+Line 424 ERROR: Symbol value differs between first and second pass
+0000046A                           424  BossRainArray               ds.l BOSS_MAX_RAIN*BOSS_RAIN_DATA_SIZE_IN_BYTES ; center of where to draw, width,height, y velocity
+0000046A                           425  
+Line 426 ERROR: Symbol value differs between first and second pass
+0000046A=                          426  BossLavaFillPercent         dc.l 0
+Line 427 ERROR: Symbol value differs between first and second pass
+0000046A=                          427  BossLavaFillRate            dc.l BOSS_LAVA_FILL_RATE
+0000046A                           428  
+Line 429 ERROR: Symbol value differs between first and second pass
+0000046A=                          429  BossTimeStateStart          dc.l 0
+0000046A                           430  
+Line 431 ERROR: Symbol value differs between first and second pass
+0000046A=                          431  SetStateTable               dc.l SetStateOne, SetStateTwo, SetStateThree, SetStateFour
+Line 432 ERROR: Symbol value differs between first and second pass
+0000046A=                          432  UpdateStateTable            dc.l UpdateStateOne, UpdateStateTwo, UpdateStateThree, UpdateStateFour
+0000046A                           433  
+0000046A                           434  
+0000046A                           435  
+0000046A                           436  
+0000046A                           437  
+0000046A                           438  
+0000046A                           439  
+0000046A                           440  
+0000046A                           441  
+0000046A                           442  
+0000046A                           443  
+0000046A                           444  
+0000046A                           445  
+0000046A                           446  
+0000046A                           447  
+Line 448 WARNING: END directive missing, starting address not set
+
+85 errors detected
+1 warning generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+BOSSBULLETARRAY     4D8
+BOSSBULLETFOUND     32A
+BOSSBULLETSACTIVE   4D3
+BOSSBULLETSLEFTTOSHOOT  4D2
+BOSSCOLOR           4CE
+BOSSLAVAFILLPERCENT  6EA
+BOSSLAVAFILLRATE    6EE
+BOSSONGROUND        4C8
+BOSSPOSITIONANDSIZE  4B4
+BOSSRAINACTIVE      5C9
+BOSSRAINARRAY       5CA
+BOSSRAINLEFTTOSHOOT  5C8
+BOSSREACHBOTTOMUPDATE  40A
+BOSSREACHFLOOR      A8
+BOSSREACHLEFTSIDE   3D0
+BOSSREACHRIGHTSIDE  3DC
+BOSSSHOOTBULLETDONE  396
+BOSSSHOOTLEFT       34C
+BOSSSHOOTRIGHT      368
+BOSSSHOTDONE        384
+BOSSSHOULDFACERIGHT  4CC
+BOSSSTATE           4CD
+BOSSSTATENEEDSTOWAIT  8E
+BOSSSTATEUPDATEDONE  90
+BOSSTIMESTATESTART  6F2
+BOSSTIMETOSHOOT     4D4
+BOSSVELOCITYX       4C4
+BOSSVELOCITYY       4C6
+BOSS_BULLET_COLOR   FFFF00
+BOSS_BULLET_COUNT_SHOT  3
+BOSS_BULLET_DATA_SIZE_IN_BYTES  A
+BOSS_BULLET_HEIGHT  A
+BOSS_BULLET_SPEED   300
+BOSS_BULLET_WIDTH   A
+BOSS_GRAVITY_SIZE   30
+BOSS_HEIGHT         28
+BOSS_LAVA_FILL_RATE  200
+BOSS_MAX_BULLETS    6
+BOSS_MAX_RAIN       4
+BOSS_RAIN_DATA_SIZE_IN_BYTES  12
+BOSS_SHOT_HEIGHT_OFFSET  19
+BOSS_START_X        190
+BOSS_TIME_BETWEEN_SHOT  32
+BOSS_TIME_TO_JUMP_AND_FALL  2A
+BOSS_VELOCITY_UP    800
+BOSS_WAIT_TIME      A
+BOSS_WIDTH          28
+CHANGECOLORDONE     120
+CHECKBOSSSTATE      34
+DONTSWAPSIGN        49E
+DOSTATE             4A
+DRAWBOSS            AA
+DRAWDONEBOSS        152
+ERASEBOSS           154
+FILLRATEISNEGATIVE  464
+FILLRATEISPOSITIVE  482
+FINDOPENBOSSBULLETLOOP  312
+FINISHSETSTATETHREE  2C4
+FINISHSTATETHREE    43C
+FINISHUPDATINGBOSSX  3E2
+FINSIHEDSTATEONE    398
+GETNEWSTATE         60
+SETSTATEFOUR        2CE
+SETSTATEONE         18E
+SETSTATETABLE       6F6
+SETSTATETHREE       1FC
+SETSTATETWO         1AC
+SETSTATETWOFACELEFT  1CC
+SETSTATETWOFACERIGHT  1D2
+SETSTATETWOOFFSET   1D6
+STATEFOURDRAW       114
+STATEFOURENDED      4A0
+STATEONEDRAW        F0
+STATETHREEDRAW      108
+STATETWODRAW        FC
+STATEZERODRAW       E4
+UPDATEBOSS          0
+UPDATEBOSSLOOKDONE  28
+UPDATEBOSSLOOKLEFT  20
+UPDATEBOSSLOOKRIGHT  12
+UPDATESTATEFOUR     446
+UPDATESTATEONE      2EC
+UPDATESTATETABLE    706
+UPDATESTATETHREE    426
+UPDATESTATETWO      3A2

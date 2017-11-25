@@ -1,0 +1,155 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 10/17/2017 7:19:20 AM
+
+00000000                             1  
+00000000  =00000050                  2  LAVA_SIZE_FROM_BOTTOM           EQU 80
+00000000                             3  
+00000000                             4  
+00000000                             5  
+00000000                             6  DrawLava
+00000000                             7  
+Line 8 ERROR: Undefined symbol
+00000000  2C39 004DBB8E              8          move.l          (BossLavaFillPercent),d6
+00000006  6F00 0096                  9          ble             DrawLavaDone
+0000000A                            10                  
+Line 11 ERROR: Undefined symbol
+0000000A  223C 004DBB8E             11          move.l          #WHITE,d1        
+Line 12 ERROR: Undefined symbol
+00000010  203C 004DBB8E             12          move.l          #SET_PEN_COLOR_COMMAND,d0
+00000016  4E4F                      13          trap            #15
+Line 14 ERROR: Undefined symbol
+00000018  203C 004DBB8E             14          move.l          #SET_FILL_COLOR_COMMAND,d0
+0000001E  4E4F                      15          trap            #15
+00000020                            16  
+00000020  E08E                      17          lsr.l           #8,d6
+00000022  CCFC 0050                 18          mulu            #LAVA_SIZE_FROM_BOTTOM,d6
+00000026  8CFC 0064                 19          divu            #100,d6
+0000002A  4846                      20          swap            d6
+0000002C  4246                      21          clr.w           d6
+0000002E  4846                      22          swap            d6
+00000030                            23  
+00000030  2E3C 000001E0             24          move.l          #480,d7
+00000036  9E86                      25          sub.l           d6,d7
+00000038                            26  
+Line 27 ERROR: Undefined symbol
+00000038  103C 008E                 27          move.b          #DRAW_RECT_COMMAND,d0
+0000003C  223C 0000011A             28          move.l          #282,d1
+00000042  2407                      29          move.l          d7,d2
+00000044  263C 0000012F             30          move.l          #303,d3
+0000004A  283C 000001E0             31          move.l          #480,d4
+00000050  4E4F                      32          trap            #15
+00000052                            33  
+00000052  223C 00000162             34          move.l          #354,d1
+00000058  263C 00000177             35          move.l          #375,d3
+0000005E  4E4F                      36          trap            #15
+00000060                            37          
+Line 38 ERROR: Undefined symbol
+00000060  2E39 004DBB8E             38          move.l          (BossLavaFillPercent),d7
+00000066  BEBC 00000064             39          cmp.l           #100,d7
+0000006C  6D00 0030                 40          blt             DrawLavaDone
+00000070                            41          
+Line 42 ERROR: Undefined symbol
+00000070  2C3C 004DBB8E             42          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d6
+Line 43 ERROR: Undefined symbol
+00000076  2E39 004DBB8E             43          move.l          (BossLavaFillPercent),d7
+0000007C  0487 00000064             44          sub.l           #100,d7
+00000082  9C87                      45          sub.l           d7,d6
+00000084                            46          
+Line 47 ERROR: Undefined symbol
+00000084  103C 008E                 47          move.b          #DRAW_RECT_COMMAND,d0
+Line 48 ERROR: Undefined symbol
+00000088  223C 004DBB8E             48          move.l          #BLACK_BOX_LEFT_SIDE_OF_SCREEN,d1
+0000008E  2406                      49          move.l          d6,d2
+Line 50 ERROR: Undefined symbol
+00000090  263C 004DBB8E             50          move.l          #BLACK_BOX_RIGHT_SIDE_OF_SCREEN,d3
+Line 51 ERROR: Undefined symbol
+00000096  283C 004DBB8E             51          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d4
+0000009C  4E4F                      52          trap            #15
+0000009E                            53          
+0000009E                            54  
+0000009E                            55  DrawLavaDone
+0000009E  4E75                      56          rts
+000000A0                            57      
+000000A0                            58  EraseLava
+000000A0                            59  
+000000A0  4EB9 00000116             60          jsr             TurnPercentToYValueInD7
+Line 61 ERROR: Undefined symbol
+000000A6  0687 004DBB8E             61          add.l           #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d7
+000000AC  2A3C 000001E0             62          move.l          #480,d5
+000000B2  9A87                      63          sub.l           d7,d5
+000000B4  2205                      64          move.l          d5,d1
+000000B6  2E06                      65          move.l          d6,d7
+000000B8  4EB9 00000116             66          jsr             TurnPercentToYValueInD7
+Line 67 ERROR: Undefined symbol
+000000BE  0687 004DBB8E             67          add.l           #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d7
+000000C4  2A3C 000001E0             68          move.l          #480,d5
+000000CA  9A87                      69          sub.l           d7,d5
+000000CC  2605                      70          move.l          d5,d3
+000000CE                            71          
+000000CE  9681                      72          sub.l           d1,d3
+Line 73 ERROR: Undefined symbol
+000000D0  0681 004DBB8E             73          add.l           #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d1
+000000D6                            74                
+Line 75 ERROR: Undefined symbol
+000000D6  41F9 004DBB8E             75          lea.l           Bitmap, a0
+000000DC  203C 0000011A             76          move.l          #282, d0
+000000E2  7415                      77          move.l          #303-282, d2
+000000E4  283C 0000011A             78          move.l          #282, d4
+000000EA  2A01                      79          move.l          d1, d5
+000000EC                            80          
+000000EC  2F08                      81          move.l          a0, -(sp)
+000000EE  2F00                      82          move.l          d0, -(sp)
+000000F0  2F01                      83          move.l          d1, -(sp)
+000000F2  2F02                      84          move.l          d2, -(sp)
+000000F4  2F03                      85          move.l          d3, -(sp)
+000000F6  2F04                      86          move.l          d4, -(sp)
+000000F8  2F05                      87          move.l          d5, -(sp)
+000000FA                            88  
+Line 89 ERROR: Undefined symbol
+000000FA  4EB9 004DBB8E             89          jsr             DrawBitmap
+00000100                            90          
+00000100  2F7C 00000162 0004        91          move.l          #354,4(sp)
+00000108                            92          
+Line 93 ERROR: Undefined symbol
+00000108  4EB9 004DBB8E             93          jsr             DrawBitmap
+0000010E                            94          
+0000010E  DFFC 0000001C             95          add.l           #28, sp
+00000114                            96          
+00000114                            97  DoneErase
+00000114  4E75                      98          rts
+00000116                            99          
+00000116                           100  TurnPercentToYValueInD7
+00000116                           101  
+00000116  E08F                     102          lsr.l           #8,d7
+00000118  CEFC 0050                103          mulu            #LAVA_SIZE_FROM_BOTTOM,d7
+0000011C  8EFC 0064                104          divu            #100,d7
+00000120  4847                     105          swap            d7
+00000122  4247                     106          clr.w           d7
+00000124  4847                     107          swap            d7
+00000126                           108  
+00000126                           109          
+00000126  4E75                     110          rts
+00000128                           111  
+00000128                           112          
+00000128                           113          
+00000128                           114          
+00000128                           115          
+00000128                           116          
+00000128                           117          
+00000128                           118          
+Line 119 WARNING: END directive missing, starting address not set
+
+18 errors detected
+1 warning generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+DONEERASE           114
+DRAWLAVA            0
+DRAWLAVADONE        9E
+ERASELAVA           A0
+LAVA_SIZE_FROM_BOTTOM  50
+TURNPERCENTTOYVALUEIND7  116

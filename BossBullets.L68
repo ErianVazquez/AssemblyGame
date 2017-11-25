@@ -1,0 +1,124 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 10/14/2017 3:35:49 PM
+
+00000000                             1  
+00000000                             2  UpdateBossBullets
+00000000                             3          
+00000000  7000                       4          move.l          #0,d0
+00000002                             5          
+00000002                             6  FindActiveBossBulletLoop
+Line 7 ERROR: Undefined symbol
+00000002  0139 00544480              7          btst            d0,(BossBulletsActive)
+00000008  6600 0010                  8          bne             ActiveBulletsFound
+0000000C  5200                       9          add.b           #1,d0
+Line 10 ERROR: Undefined symbol
+0000000E  B03C 008E                 10          cmp.b           #BOSS_MAX_BULLETS,d0
+00000012  6E00 001A                 11          bgt             AllBossBulletsUpdated
+00000016  4EF8 0002                 12          jmp             FindActiveBossBulletLoop
+0000001A                            13  
+0000001A                            14  ActiveBulletsFound
+0000001A                            15  
+0000001A  4EB9 00000030             16          jsr             UpdateSpecificBossBullet
+00000020                            17  
+00000020  5200                      18          add.b           #1,d0
+Line 19 ERROR: Undefined symbol
+00000022  B03C 008E                 19          cmp.b           #BOSS_MAX_BULLETS,d0
+00000026  6E00 0006                 20          bgt             AllBossBulletsUpdated
+0000002A  4EF8 0002                 21          jmp             FindActiveBossBulletLoop
+0000002E                            22  
+0000002E                            23  AllBossBulletsUpdated
+0000002E                            24          
+0000002E                            25          ;jsr             DrawBossBullets  
+0000002E                            26              
+0000002E  4E75                      27          rts
+00000030                            28          
+00000030                            29  UpdateSpecificBossBullet
+00000030                            30  
+00000030  2200                      31          move.l          d0,d1
+Line 32 ERROR: Undefined symbol
+00000032  41F9 004DBB8E             32          lea             BossBulletArray,a0
+Line 33 ERROR: Undefined symbol
+00000038  C2FC BB8E                 33          mulu            #BOSS_BULLET_DATA_SIZE_IN_BYTES,d1
+0000003C  D1C1                      34          add.l           d1,a0
+0000003E                            35          
+Line 36 ERROR: Undefined symbol
+0000003E  2E39 004DBB8E             36          move.l          (DeltaTime),d7
+00000044  3228 0008                 37          move.w          8(a0),d1
+00000048  C3C7                      38          muls            d7,d1
+0000004A  D290                      39          add.l           (a0),d1
+0000004C  2081                      40          move.l          d1,(a0)        
+0000004E                            41          
+0000004E  4E75                      42          rts
+00000050                            43  
+00000050                            44          
+00000050                            45  DrawBossBullets
+00000050                            46  
+00000050  7000                      47          move.l          #0,d0
+Line 48 ERROR: Undefined symbol
+00000052  4DF9 004DBB8E             48          lea             BossBulletArray,a6
+00000058                            49          
+00000058                            50  DrawActiveBossBulletLoop
+Line 51 ERROR: Undefined symbol
+00000058  0139 00544480             51          btst            d0,(BossBulletsActive)
+0000005E  6600 0016                 52          bne             DrawActiveBossBulletFound   
+00000062  5200                      53          add.b           #1,d0
+00000064  DDFC 0000000A             54          add.l           #10,a6
+Line 55 ERROR: Undefined symbol
+0000006A  B03C 008E                 55          cmp.b           #BOSS_MAX_BULLETS,d0
+0000006E  6E00 0020                 56          bgt             AllBossBulletDrawn
+00000072  4EF8 0058                 57          jmp             DrawActiveBossBulletLoop
+00000076                            58  
+00000076                            59  DrawActiveBossBulletFound   
+00000076                            60              
+00000076  4EB9 00000092             61          jsr             DrawSpecificBossBulletAtA6
+0000007C  5200                      62          add.b           #1,d0
+0000007E  DDFC 0000000A             63          add.l           #10,a6
+Line 64 ERROR: Undefined symbol
+00000084  B03C 008E                 64          cmp.b           #BOSS_MAX_BULLETS,d0
+00000088  6E00 0006                 65          bgt             AllBossBulletDrawn
+0000008C  4EF8 0058                 66          jmp             DrawActiveBossBulletLoop
+00000090                            67          
+00000090                            68  AllBossBulletDrawn
+00000090                            69              
+00000090  4E75                      70          rts
+00000092                            71          
+00000092                            72  DrawSpecificBossBulletAtA6
+00000092  2216                      73          move.l          (a6),d1
+00000094  E089                      74          lsr.l           #8,d1
+00000096  242E 0004                 75          move.l          4(a6),d2
+0000009A  E08A                      76          lsr.l           #8,d2
+0000009C  2601                      77          move.l          d1,d3
+Line 78 ERROR: Undefined symbol
+0000009E  0683 004DBB8E             78          add.l           #BULLET_SIZE_WIDTH,d3
+000000A4  2802                      79          move.l          d2,d4
+Line 80 ERROR: Undefined symbol
+000000A6  0684 004DBB8E             80          add.l           #BULLET_SIZE_HEIGHT,d4  
+000000AC  4E4F                      81          trap            #15
+000000AE                            82          
+000000AE  4E75                      83          rts
+000000B0                            84          
+000000B0                            85  EraseBossBullets
+000000B0                            86          
+000000B0                            87      
+000000B0  4E75                      88          rts
+Line 89 WARNING: END directive missing, starting address not set
+
+12 errors detected
+1 warning generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+ACTIVEBULLETSFOUND  1A
+ALLBOSSBULLETDRAWN  90
+ALLBOSSBULLETSUPDATED  2E
+DRAWACTIVEBOSSBULLETFOUND  76
+DRAWACTIVEBOSSBULLETLOOP  58
+DRAWBOSSBULLETS     50
+DRAWSPECIFICBOSSBULLETATA6  92
+ERASEBOSSBULLETS    B0
+FINDACTIVEBOSSBULLETLOOP  2
+UPDATEBOSSBULLETS   0
+UPDATESPECIFICBOSSBULLET  30

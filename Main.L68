@@ -1,0 +1,3016 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.15.04
+Created On: 11/25/2017 12:47:30 PM
+
+00001000                             1  START   ORG     $1000
+00001000                             2  
+00001000                             3  ALL_REG                         REG     D0-D7/A0-A6
+00001000                             4  
+00001000  =00000050                  5  SET_PEN_COLOR_COMMAND           EQU     80
+00001000  =00000051                  6  SET_FILL_COLOR_COMMAND          EQU     81
+00001000  =00000058                  7  DRAW_CIRCLE_COMMAND             EQU     88
+00001000  =00000057                  8  DRAW_RECT_COMMAND               EQU     87
+00001000                             9  
+00001000  =0000000B                 10  CLEAR_SCREEN_COMMAND            EQU     11
+00001000  =0000FF00                 11  CLEAR_SCREEN_MAGIC_VAL          EQu     $FF00
+00001000  =0000005C                 12  DRAWING_MODE_TRAP_CODE          EQU     92
+00001000  =00000011                 13  DOUBLE_BUFFERED_MODE            EQU     17
+00001000  =0000005E                 14  REPAINT_SCREEN_TRAP_CODE        EQU     94
+00001000  =00000008                 15  GET_TIME_SINCE_MIDNIGHT         EQU     8
+00001000                            16  
+00001000  =0000001E                 17  LEFT_SIDE_OF_SCREEN             EQU     30
+00001000  =00000262                 18  RIGHT_SIDE_OF_SCREEN            EQU     610
+00001000  =00000190                 19  BOTTOM_SIDE_OF_SCREEN           EQU     400
+00001000                            20  
+00001000  =00000280                 21  BACKGROUND_IMG_WIDTH            EQU     640
+00001000  =000001E0                 22  BACKGROUND_IMG_HEIGHT           EQU     480
+00001000                            23  
+00001000  =0000000A                 24  DEBOUNCE_TIME                   EQU     10
+00001000                            25  
+00001000  =0000FFFF                 26  YELLOW                          EQU     $0000FFFF
+00001000  =00FFFFFF                 27  WHITE                           EQU     $00FFFFFF
+00001000  =00000000                 28  BLACK                           EQU     $00000000
+00001000                            29  
+00001000  =00000078                 30  TIME_TO_KILL_BOSS               EQU     120
+00001000                            31  
+00001000  =00000052                 32  GET_KEY_INPUT_D1___R            EQU     $00000052
+00001000                            33  
+00001000  =0000001E                 34  BLACK_BOX_LEFT_SIDE_OF_SCREEN   EQU     30
+00001000  =0000002D                 35  BLACK_BOX_TOP_SIDE_OF_SCREEN    EQU     45
+00001000  =00000262                 36  BLACK_BOX_RIGHT_SIDE_OF_SCREEN  EQU     610
+00001000  =00000190                 37  BLACK_BOX_BOTTOM_SIDE_OF_SCREEN EQU     400
+00001000                            38  
+00001000  =000000C8                 39  LEFT_PLATFORM_LEFT_X            EQU     200
+00001000  =0000018A                 40  RIGHT_PLATFORM_LEFT_X           EQU     394
+00001000  =0000012C                 41  PLATFORM_Y                      EQU     300
+00001000  =0000002E                 42  PLATFORM_WIDTH                  EQU     46
+00001000  =0000000C                 43  PLATFORM_HEIGHT                 EQU     12
+00001000                            44  
+00001000  =0000021C                 45  SCREEN_WIDTH                    EQU     540
+00001000  =000001E0                 46  SCREEN_HEIGHT                   EQU     480
+00001000                            47  
+00001000                            48  ;full screen
+00001000  103C 0021                 49          move.b          #33,d0
+00001004  123C 0002                 50          move.b          #2,d1
+00001008                            51          *trap           #15
+00001008                            52  
+00001008                            53  Setup
+00001008                            54  
+00001008                            55  ;Setup
+00001008                            56          *set double buffered mode
+00001008  103C 005C                 57          move.b          #DRAWING_MODE_TRAP_CODE,d0
+0000100C  123C 0011                 58          move.b          #DOUBLE_BUFFERED_MODE,d1
+00001010  4E4F                      59          trap            #15
+00001012                            60  
+00001012  4EB9 00050B04             61          jsr             seedRandomNumber
+00001018                            62  
+00001018  41F9 00002F20             63          lea.l           Bitmap, a0
+0000101E  7000                      64          move.l          #0, d0
+00001020  7200                      65          move.l          #0, d1
+00001022  243C 00000280             66          move.l          #BACKGROUND_IMG_WIDTH, d2
+00001028  263C 000001E0             67          move.l          #BACKGROUND_IMG_HEIGHT, d3
+0000102E  7800                      68          move.l          #0, d4
+00001030  7A00                      69          move.l          #0, d5
+00001032                            70          
+00001032  2F08                      71          move.l          a0, -(sp)
+00001034  2F00                      72          move.l          d0, -(sp)
+00001036  2F01                      73          move.l          d1, -(sp)
+00001038  2F02                      74          move.l          d2, -(sp)
+0000103A  2F03                      75          move.l          d3, -(sp)
+0000103C  2F04                      76          move.l          d4, -(sp)
+0000103E  2F05                      77          move.l          d5, -(sp)
+00001040                            78  
+00001040  4EB9 00002960             79          jsr             DrawBitmap
+00001046  DFFC 0000001C             80          add.l           #28, sp
+0000104C                            81          
+0000104C  7200                      82          move.l          #Black,d1
+0000104E                            83          
+0000104E  7050                      84          move.l          #SET_PEN_COLOR_COMMAND,d0
+00001050  4E4F                      85          trap            #15
+00001052  7051                      86          move.l          #SET_FILL_COLOR_COMMAND,d0
+00001054  4E4F                      87          trap            #15
+00001056                            88  
+00001056  103C 0057                 89          move.b          #DRAW_RECT_COMMAND,d0
+0000105A  721E                      90          move.l          #BLACK_BOX_LEFT_SIDE_OF_SCREEN,d1
+0000105C  742D                      91          move.l          #BLACK_BOX_TOP_SIDE_OF_SCREEN,d2
+0000105E  263C 00000262             92          move.l          #BLACK_BOX_RIGHT_SIDE_OF_SCREEN,d3
+00001064  283C 00000190             93          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d4
+0000106A  4E4F                      94          trap            #15
+0000106C                            95          
+0000106C  4EB9 0000132C             96          jsr             DrawDroppers
+00001072  4EB9 00001394             97          jsr             DrawPlatforms
+00001078                            98          
+00001078  4EB9 00001324             99          jsr             swapBuffers
+0000107E                           100  
+0000107E  4EB9 0000126E            101          jsr             GetDeltaTime
+00001084  23F9 000013DC 00001B6E   102          move.l          (OldTime),(PlayerVulnerabilityTime)
+0000108E  2039 000013DC            103          move.l          (OldTime),d0
+00001094  0680 00002EE0            104          add.l           #TIME_TO_KILL_BOSS*100,d0
+0000109A  23C0 000013E0            105          move.l          d0,(EndTime)
+000010A0                           106          
+000010A0                           107  GameLoop:
+000010A0  4EB9 0000126E            108          jsr             GetDeltaTime 
+000010A6                           109          
+000010A6  4EB9 000012F6            110          jsr             ClearScreen
+000010AC                           111          
+000010AC  4EB9 000012A4            112          jsr             UpdateGameObjects
+000010B2                           113          
+000010B2  4EB9 00001806            114          jsr             CheckCollision
+000010B8                           115          
+000010B8  4EB9 000012CA            116          jsr             DrawGameObjects
+000010BE                           117          
+000010BE  4EB9 00001324            118          jsr             swapBuffers
+000010C4                           119          
+000010C4  4EB9 000010CC            120          jsr             CheckGameStatus
+000010CA                           121          
+000010CA  60D4                     122          bra             GameLoop
+000010CC                           123  
+000010CC                           124  CheckGameStatus
+000010CC                           125  
+000010CC  43F9 000013E8            126          lea             GameOverBossKilled,a1
+000010D2  7201                     127          move.l          #1,d1
+000010D4  2039 00001B66            128          move.l          (BossHealth),d0
+000010DA  6F00 002A                129          ble             GameOver
+000010DE  43F9 00001403            130          lea             GameOverPlayerKilled,a1 
+000010E4  7200                     131          move.l          #0,d1
+000010E6  2039 00001B6A            132          move.l          (PlayerHealth),d0
+000010EC  6F00 0018                133          ble             GameOver
+000010F0  7200                     134          move.l          #0,d1
+000010F2  43F9 0000141F            135          lea             GameOverTimeRanOut,a1   
+000010F8  2039 000013E4            136          move.l          (TimeLeft),d0
+000010FE  48C0                     137          ext.l           d0
+00001100  6B00 0004                138          bmi             GameOver
+00001104                           139  
+00001104  4E75                     140          rts
+00001106                           141  GameOver
+00001106                           142          
+00001106  B2BC 00000000            143          cmp.l           #0,d1
+0000110C  6700 000E                144          beq             GameOverYouLose   
+00001110                           145  GameOverYouWin
+00001110  41F9 0004F54C            146          lea.l           YouWin,a0
+00001116  4EF9 00001122            147          jmp             GameOverPrint    
+0000111C                           148  GameOverYouLose   
+0000111C  41F9 0004DF90            149          lea.l           YouLose,a0
+00001122                           150  GameOverPrint           
+00001122                           151          
+00001122  7000                     152          move.l          #0, d0
+00001124  7201                     153          move.l          #1, d1
+00001126  243C 00000082            154          move.l          #130, d2
+0000112C  7627                     155          move.l          #39, d3
+0000112E  283C 000000FF            156          move.l          #255, d4
+00001134  2A3C 000000DC            157          move.l          #220, d5
+0000113A                           158          
+0000113A  2F08                     159          move.l          a0, -(sp)
+0000113C  2F00                     160          move.l          d0, -(sp)
+0000113E  2F01                     161          move.l          d1, -(sp)
+00001140  2F02                     162          move.l          d2, -(sp)
+00001142  2F03                     163          move.l          d3, -(sp)
+00001144  2F04                     164          move.l          d4, -(sp)
+00001146  2F05                     165          move.l          d5, -(sp)
+00001148                           166  
+00001148  4EB9 00002960            167          jsr             DrawBitmap
+0000114E                           168  
+0000114E  4EB9 00001324            169          jsr             swapBuffers
+00001154                           170          
+00001154                           171  GameOverLoop
+00001154                           172          
+00001154  203C 00000013            173          move.l          #GET_KEY_INPUT_TRAP_CODE,d0
+0000115A  7252                     174          move.l          #GET_KEY_INPUT_D1___R,d1
+0000115C  4E4F                     175          trap            #15
+0000115E  1201                     176          move.b          d1,d1
+00001160  6600 0004                177          bne             ResetGame
+00001164                           178          
+00001164  67EE                     179          beq             GameOverLoop
+00001166                           180          
+00001166                           181  ResetGame
+00001166                           182          
+00001166  23FC 000000FF 00001B66   183          move.l          #BOSS_START_HEALTH,(BossHealth)
+00001170  23FC 000000FF 00001B6A   184          move.l          #PLAYER_START_HEALTH,(PlayerHealth)
+0000117A                           185  ;Reset Boss        
+0000117A  41F9 00002012            186          lea             BossPositionAndSize,a0
+00001180  20FC 00019000            187          move.l          #BOSS_START_X<<8,(a0)+
+00001186  20FC 00016700            188          move.l          #BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8-1<<8,(a0)+
+0000118C  20FC 00002800            189          move.l          #BOSS_WIDTH<<8,(a0)+
+00001192  20FC 00002800            190          move.l          #BOSS_HEIGHT<<8,(a0)+
+00001198                           191  
+00001198  30FC 0000                192          move.w          #0,(a0)+
+0000119C  30FC 0000                193          move.w          #0,(a0)+
+000011A0  20FC 00000000            194          move.l          #0,(a0)+
+000011A6  10FC 0000                195          move.b          #0,(a0)+
+000011AA  10FC 0000                196          move.b          #0,(a0)+
+000011AE  20FC 00FFFFFF            197          move.l          #$00FFFFFF,(a0)+   
+000011B4                           198  
+000011B4  41F9 00002030            199          lea             BossBulletsLeftToShoot,a0
+000011BA  10FC 0003                200          move.b          #BOSS_BULLET_COUNT_SHOT,(a0)+
+000011BE  10BC 0000                201          move.b          #0,(a0)
+000011C2                           202          
+000011C2  41F9 00002248            203          lea             BossLavaFillPercent,a0
+000011C8  20FC 00000000            204          move.l          #0,(a0)+
+000011CE  20FC 00000180            205          move.l          #BOSS_LAVA_FILL_RATE,(a0)+
+000011D4                           206          
+000011D4  41F9 00002126            207          lea             BossRainLeftToShoot,a0
+000011DA  10FC 0004                208          move.b          #BOSS_MAX_RAIN,(a0)+
+000011DE  117C 0000 0001           209          move.b          #0,1(a0)
+000011E4                           210          
+000011E4  41F9 00002250            211          lea             BossTimeStateStart,a0
+000011EA  20BC 00000000            212          move.l          #0,(a0)
+000011F0                           213          
+000011F0                           214  ;Reset Player
+000011F0  41F9 00002636            215          lea             PlayerPositionAndSize,a0
+000011F6  20FC 00006400            216          move.l          #PLAYER_START_X<<8,(a0)+
+000011FC  20FC 00012C00            217          move.l          #PLAYER_START_Y<<8,(a0)+
+00001202  20FC 00001400            218          move.l          #PLAYER_WIDTH<<8,(a0)+
+00001208  20FC 00001400            219          move.l          #PLAYER_HEIGHT<<8,(a0)+
+0000120E                           220  
+0000120E  20FC 00000000            221          move.l          #0,(a0)+
+00001214  20FC 00000000            222          move.l          #0,(a0)+
+0000121A  20FC 00000001            223          move.l          #1,(a0)+
+00001220  20FC 00000002            224          move.l          #2,(a0)+
+00001226  20FC 00000000            225          move.l          #0,(a0)+
+0000122C  20FC 00FFFFFF            226          move.l          #WHITE,(a0)+
+00001232  20FC 00000000            227          move.l          #0,(a0)+
+00001238  20FC 00000000            228          move.l          #0,(a0)+  
+0000123E                           229  
+0000123E                           230  ; Reset Bullet      
+0000123E  41F9 00002934            231          lea             AllowedBullets,a0
+00001244  10FC 0003                232          move.b          #MAX_ALLOWED_BULLETS,(a0)+
+00001248  10FC 0000                233          move.b          #0,(a0)+
+0000124C                           234  
+0000124C  41F9 00001B66            235          lea             BossHealth,a0
+00001252  20FC 000000FF            236          move.l          #BOSS_START_HEALTH,(a0)+
+00001258  20FC 000000FF            237          move.l          #PLAYER_START_HEALTH,(a0)+
+0000125E  20FC 00000000            238          move.l          #0,(a0)+
+00001264                           239          
+00001264  2E7C 01000000            240          move.l          #$01000000,a7
+0000126A  4EF8 1008                241          jmp             Setup
+0000126E                           242  
+0000126E                           243  GetDeltaTime
+0000126E  7008                     244          move.l          #GET_TIME_SINCE_MIDNIGHT,d0
+00001270  4E4F                     245          trap            #15
+00001272  92B9 000013DC            246          sub.l           (OldTime),d1
+00001278  23C1 000013D8            247          move.l          d1,(DeltaTime)
+0000127E  4E4F                     248          trap            #15
+00001280  23C1 000013DC            249          move.l          d1,(OldTime)
+00001286  4E75                     250          rts
+00001288                           251  
+00001288                           252  DrawBackgroundBitmap: ;a0-address, d0-x piece d1-y piece d2-piece width d3-piece height d4-draw x location d5-draw y location
+00001288                           253          
+00001288  2F08                     254          move.l          a0, -(sp)
+0000128A  2F00                     255          move.l          d0, -(sp)
+0000128C  2F01                     256          move.l          d1, -(sp)
+0000128E  2F02                     257          move.l          d2, -(sp)
+00001290  2F03                     258          move.l          d3, -(sp)
+00001292  2F04                     259          move.l          d4, -(sp)
+00001294  2F05                     260          move.l          d5, -(sp)
+00001296                           261  
+00001296  4EB9 00002960            262          jsr             DrawBitmap
+0000129C                           263          
+0000129C  DFFC 0000001C            264          add.l           #28, sp
+000012A2  4E75                     265          rts
+000012A4                           266          
+000012A4                           267  UpdateGameObjects
+000012A4  4EB9 000017C8            268          jsr             CalculateTimeLeft
+000012AA  4EB9 000023BE            269          jsr             UpdatePlayer
+000012B0  4EB9 00001B72            270          jsr             UpdateBoss
+000012B6  4EB9 00002666            271          jsr             UpdateBullets
+000012BC  4EB9 00002274            272          jsr             UpdateBossBullets
+000012C2  4EB9 00001568            273          jsr             UpdateRain
+000012C8                           274  
+000012C8  4E75                     275          rts
+000012CA                           276          
+000012CA                           277  DrawGameObjects
+000012CA  4EB9 000016A8            278          jsr             DrawTimeLeft
+000012D0  4EB9 000025A4            279          jsr             DrawPlayer
+000012D6  4EB9 00002836            280          jsr             DrawBullets
+000012DC  4EB9 00001C1C            281          jsr             DrawBoss
+000012E2  4EB9 000022D8            282          jsr             DrawBossBullets 
+000012E8  4EB9 00001628            283          jsr             DrawBossRain
+000012EE  4EB9 0000144A            284          jsr             DrawLava
+000012F4                           285          
+000012F4  4E75                     286          rts
+000012F6                           287          
+000012F6                           288  ClearScreen
+000012F6                           289          
+000012F6                           290          ;jsr             ErasePlayer
+000012F6                           291          ;jsr             EraseBullets
+000012F6                           292          ;jsr             EraseBoss
+000012F6                           293          ;jsr             EraseBossBullets
+000012F6                           294          ;jsr             ClearSegments
+000012F6                           295          ;jsr             EraseLava
+000012F6                           296                  
+000012F6  7200                     297          move.l          #Black,d1
+000012F8                           298          
+000012F8  7050                     299          move.l          #SET_PEN_COLOR_COMMAND,d0
+000012FA  4E4F                     300          trap            #15
+000012FC  7051                     301          move.l          #SET_FILL_COLOR_COMMAND,d0
+000012FE  4E4F                     302          trap            #15
+00001300                           303  
+00001300  103C 0057                304          move.b          #DRAW_RECT_COMMAND,d0
+00001304  721E                     305          move.l          #BLACK_BOX_LEFT_SIDE_OF_SCREEN,d1
+00001306  742D                     306          move.l          #BLACK_BOX_TOP_SIDE_OF_SCREEN,d2
+00001308  263C 00000262            307          move.l          #BLACK_BOX_RIGHT_SIDE_OF_SCREEN,d3
+0000130E  283C 00000190            308          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d4
+00001314  4E4F                     309          trap            #15
+00001316                           310          
+00001316  4EB9 0000132C            311          jsr             DrawDroppers
+0000131C  4EB9 00001394            312          jsr             DrawPlatforms
+00001322                           313         
+00001322  4E75                     314          rts
+00001324                           315  
+00001324                           316  swapBuffers
+00001324  103C 005E                317          move.b          #REPAINT_SCREEN_TRAP_CODE,d0
+00001328  4E4F                     318          TRAP            #15
+0000132A  4E75                     319          rts 
+0000132C                           320  
+0000132C                           321  DrawDroppers
+0000132C  41F9 00002E14            322          lea.l           Dropper,a0
+00001332  7000                     323          move.l          #0, d0
+00001334  7200                     324          move.l          #0, d1
+00001336  243C 00000008            325          move.l          #DROPPER_WIDTH, d2
+0000133C  263C 00000017            326          move.l          #DROPPER_HEIGHT, d3
+00001342  283C 0000008E            327          move.l          #DROPPER_ONE_X, d4
+00001348  2A3C 0000002D            328          move.l          #DROPPER_Y, d5
+0000134E                           329          
+0000134E  2F08                     330          move.l          a0, -(sp)
+00001350  2F00                     331          move.l          d0, -(sp)
+00001352  2F01                     332          move.l          d1, -(sp)
+00001354  2F02                     333          move.l          d2, -(sp)
+00001356  2F03                     334          move.l          d3, -(sp)
+00001358  2F04                     335          move.l          d4, -(sp)
+0000135A  2F05                     336          move.l          d5, -(sp)
+0000135C                           337  
+0000135C  4EB9 00002960            338          jsr             DrawBitmap
+00001362                           339          
+00001362  2F7C 00000102 0004       340          move.l          #DROPPER_TWO_X,4(sp)
+0000136A                           341  
+0000136A  4EB9 00002960            342          jsr             DrawBitmap
+00001370                           343  
+00001370  2F7C 00000176 0004       344          move.l          #DROPPER_THREE_X,4(sp)
+00001378                           345  
+00001378  4EB9 00002960            346          jsr             DrawBitmap
+0000137E                           347          
+0000137E  2F7C 000001EA 0004       348          move.l          #DROPPER_FOUR_X,4(sp)
+00001386                           349  
+00001386  4EB9 00002960            350          jsr             DrawBitmap
+0000138C                           351          
+0000138C  DFFC 0000001C            352          add.l           #28, sp    
+00001392                           353          
+00001392  4E75                     354          rts
+00001394                           355          
+00001394                           356  DrawPlatforms
+00001394  41F9 00002B20            357          lea.l           Platform,a0
+0000139A  7000                     358          move.l          #0, d0
+0000139C  7200                     359          move.l          #0, d1
+0000139E  742E                     360          move.l          #PLATFORM_WIDTH, d2
+000013A0  760C                     361          move.l          #PLATFORM_HEIGHT, d3
+000013A2  283C 000000C8            362          move.l          #LEFT_PLATFORM_LEFT_X, d4
+000013A8  2A3C 0000012C            363          move.l          #PLATFORM_Y, d5
+000013AE                           364          
+000013AE  2F08                     365          move.l          a0, -(sp)
+000013B0  2F00                     366          move.l          d0, -(sp)
+000013B2  2F01                     367          move.l          d1, -(sp)
+000013B4  2F02                     368          move.l          d2, -(sp)
+000013B6  2F03                     369          move.l          d3, -(sp)
+000013B8  2F04                     370          move.l          d4, -(sp)
+000013BA  2F05                     371          move.l          d5, -(sp)
+000013BC                           372  
+000013BC  4EB9 00002960            373          jsr             DrawBitmap
+000013C2                           374          
+000013C2  2F7C 0000018A 0004       375          move.l          #RIGHT_PLATFORM_LEFT_X,4(sp)
+000013CA                           376  
+000013CA  4EB9 00002960            377          jsr             DrawBitmap
+000013D0                           378          
+000013D0  DFFC 0000001C            379          add.l           #28, sp    
+000013D6                           380          
+000013D6  4E75                     381          rts        
+000013D8                           382  
+000013D8                           383  DeltaTime               ds.l 1
+000013DC                           384  OldTime                 ds.l 1
+000013E0                           385  EndTime                 ds.l 1
+000013E4                           386  TimeLeft                ds.l 1
+000013E8                           387  
+000013E8= 59 4F 55 20 57 49 ...    388  GameOverBossKilled      dc.b 'YOU WIN Press R to restart',0
+00001403= 59 4F 55 20 4C 4F ...    389  GameOverPlayerKilled    dc.b 'YOU LOST Press R to restart',0
+0000141F= 59 4F 55 20 52 41 ...    390  GameOverTimeRanOut      dc.b 'YOU RAN OUT OF TIME Press R to restart',0
+00001446                           391  EmptyLong               ds.l 1
+0000144A                           392  
+0000144A                           393          INCLUDE "Lava.x68"
+0000144A                           394  
+0000144A  =00000050                395  LAVA_SIZE_FROM_BOTTOM           EQU 80
+0000144A                           396  
+0000144A                           397  
+0000144A                           398  
+0000144A                           399  DrawLava
+0000144A                           400  
+0000144A  2C39 00002248            401          move.l          (BossLavaFillPercent),d6
+00001450  6F00 008C                402          ble             DrawLavaDone
+00001454                           403                  
+00001454  223C 00FF00FF            404          move.l          #$FF00FF,d1        
+0000145A  7050                     405          move.l          #SET_PEN_COLOR_COMMAND,d0
+0000145C  4E4F                     406          trap            #15
+0000145E  7051                     407              move.l          #SET_FILL_COLOR_COMMAND,d0
+00001460  4E4F                     408              trap                #15
+00001462                           409  
+00001462  E08E                     410          lsr.l           #8,d6
+00001464  CCFC 0050                411          mulu            #LAVA_SIZE_FROM_BOTTOM,d6
+00001468  8CFC 0064                412          divu            #100,d6
+0000146C  4846                     413          swap            d6
+0000146E  4246                     414          clr.w           d6
+00001470  4846                     415          swap            d6
+00001472                           416  
+00001472  2E3C 000001E0            417          move.l          #480,d7
+00001478  9E86                     418          sub.l           d6,d7
+0000147A                           419  
+0000147A  103C 0057                420              move.b              #DRAW_RECT_COMMAND,d0
+0000147E  223C 0000011A            421              move.l          #282,d1
+00001484  2407                     422              move.l          d7,d2
+00001486  263C 0000012F            423              move.l          #303,d3
+0000148C  283C 000001E0            424              move.l          #480,d4
+00001492  4E4F                     425          trap            #15
+00001494                           426  
+00001494  223C 00000162            427          move.l          #354,d1
+0000149A  263C 00000177            428              move.l          #375,d3
+000014A0  4E4F                     429          trap            #15
+000014A2                           430          
+000014A2  2E39 00002248            431          move.l          (BossLavaFillPercent),d7
+000014A8  BEBC 00006400            432          cmp.l           #100<<8,d7
+000014AE  6D00 002E                433          blt             DrawLavaDone
+000014B2                           434          
+000014B2  2C3C 00000190            435          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d6
+000014B8  2E39 00002248            436          move.l          (BossLavaFillPercent),d7
+000014BE  E08F                     437          lsr.l           #8,d7
+000014C0  0487 00000064            438          sub.l           #100,d7
+000014C6  9C87                     439          sub.l           d7,d6
+000014C8                           440          
+000014C8  103C 0057                441          move.b          #DRAW_RECT_COMMAND,d0
+000014CC  721E                     442              move.l          #BLACK_BOX_LEFT_SIDE_OF_SCREEN,d1
+000014CE  2406                     443              move.l          d6,d2
+000014D0  263C 00000262            444              move.l          #BLACK_BOX_RIGHT_SIDE_OF_SCREEN,d3
+000014D6  283C 00000190            445              move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d4
+000014DC  4E4F                     446          trap            #15
+000014DE                           447          
+000014DE                           448  
+000014DE                           449  DrawLavaDone
+000014DE  4E75                     450          rts
+000014E0                           451      
+000014E0                           452  EraseLava
+000014E0                           453  
+000014E0  4EB9 00001556            454          jsr             TurnPercentToYValueInD7
+000014E6  0687 00000190            455          add.l           #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d7
+000014EC  2A3C 000001E0            456          move.l          #480,d5
+000014F2  9A87                     457          sub.l           d7,d5
+000014F4  2205                     458          move.l          d5,d1
+000014F6  2E06                     459          move.l          d6,d7
+000014F8  4EB9 00001556            460          jsr             TurnPercentToYValueInD7
+000014FE  0687 00000190            461          add.l           #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d7
+00001504  2A3C 000001E0            462          move.l          #480,d5
+0000150A  9A87                     463          sub.l           d7,d5
+0000150C  2605                     464          move.l          d5,d3
+0000150E                           465          
+0000150E  9681                     466          sub.l           d1,d3
+00001510  0681 00000190            467          add.l           #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d1
+00001516                           468                
+00001516  41F9 00002F20            469          lea.l           Bitmap, a0
+0000151C  203C 0000011A            470          move.l          #282, d0
+00001522  7415                     471          move.l          #303-282, d2
+00001524  283C 0000011A            472          move.l          #282, d4
+0000152A  2A01                     473          move.l          d1, d5
+0000152C                           474          
+0000152C  2F08                     475          move.l          a0, -(sp)
+0000152E  2F00                     476          move.l          d0, -(sp)
+00001530  2F01                     477          move.l          d1, -(sp)
+00001532  2F02                     478          move.l          d2, -(sp)
+00001534  2F03                     479          move.l          d3, -(sp)
+00001536  2F04                     480          move.l          d4, -(sp)
+00001538  2F05                     481          move.l          d5, -(sp)
+0000153A                           482  
+0000153A  4EB9 00002960            483          jsr             DrawBitmap
+00001540                           484          
+00001540  2F7C 00000162 0004       485              move.l          #354,4(sp)
+00001548                           486              
+00001548  4EB9 00002960            487              jsr             DrawBitmap
+0000154E                           488              
+0000154E  DFFC 0000001C            489              add.l           #28, sp
+00001554                           490              
+00001554                           491  DoneErase
+00001554  4E75                     492          rts
+00001556                           493          
+00001556                           494  TurnPercentToYValueInD7
+00001556                           495  
+00001556  E08F                     496          lsr.l           #8,d7
+00001558  CEFC 0050                497          mulu            #LAVA_SIZE_FROM_BOTTOM,d7
+0000155C  8EFC 0064                498          divu            #100,d7
+00001560  4847                     499          swap            d7
+00001562  4247                     500          clr.w           d7
+00001564  4847                     501          swap            d7
+00001566                           502  
+00001566                           503          
+00001566  4E75                     504          rts
+00001568                           505  
+00001568                           506          
+00001568                           507          
+00001568                           508          
+00001568                           509          
+00001568                           510          
+00001568                           511          
+00001568                           512          
+00001568                           513  
+00001568                           514  -------------------- end include --------------------
+00001568                           515          INCLUDE "Rain.x68"
+00001568  =0000008E                516  DROPPER_ONE_X               EQU 142
+00001568  =00000102                517  DROPPER_TWO_X               EQU 258
+00001568  =00000176                518  DROPPER_THREE_X             EQU 374
+00001568  =000001EA                519  DROPPER_FOUR_X              EQU 490
+00001568                           520  
+00001568  =0000002D                521  DROPPER_Y                   EQU 45
+00001568                           522      
+00001568  =00000008                523  DROPPER_WIDTH               EQU 8
+00001568  =00000017                524  DROPPER_HEIGHT              EQU 23
+00001568                           525  
+00001568  =00000A00                526  DROP_SIZE                   EQU 10<<8
+00001568  =00000020                527  DROP_SIZE_INCREASE          EQU 1<<5
+00001568                           528  
+00001568  =00000180                529  INIITAL_DROP_SPEED          EQU $180
+00001568                           530  
+00001568  =00000186                531  DROPPER_BOTTOM_OF_SCREEN    EQU 390
+00001568                           532  
+00001568                           533  
+00001568                           534  UpdateRain
+00001568                           535  
+00001568  1039 00002127            536          move.b              (BossRainActive),d0
+0000156E  6700 00B6                537          beq                 RainUpdateDone
+00001572                           538          
+00001572  41F9 00002128            539          lea                 BossRainArray,a0
+00001578  2028 0008                540          move.l              8(a0),d0
+0000157C  B0BC 00000A00            541          cmp.l               #DROP_SIZE,d0
+00001582  6D00 0008                542          blt                 DoneGrowRain
+00001586  4EF9 000015BC            543          jmp                 RainFalling
+0000158C                           544  DoneGrowRain
+0000158C                           545          
+0000158C  41F9 00002128            546          lea                 BossRainArray,a0
+00001592                           547          
+00001592  7020                     548          move.l              #DROP_SIZE_INCREASE,d0
+00001594  2238 13D8                549          move.l              (DeltaTime),d1
+00001598  C0C1                     550          mulu                d1,d0
+0000159A                           551          
+0000159A  D1A8 0008                552          add.l               d0,8(a0)
+0000159E  D1A8 001A                553          add.l               d0,26(a0)
+000015A2  D1A8 002C                554          add.l               d0,44(a0)
+000015A6  D1A8 003E                555          add.l               d0,62(a0)
+000015AA                           556  
+000015AA  D1A8 000C                557          add.l               d0,12(a0)
+000015AE  D1A8 001E                558          add.l               d0,30(a0)
+000015B2  D1A8 0030                559          add.l               d0,48(a0)
+000015B6  D1A8 0042                560          add.l               d0,66(a0)        
+000015BA                           561          
+000015BA  4E75                     562          rts
+000015BC                           563          
+000015BC                           564  RainFalling
+000015BC                           565  
+000015BC  7C00                     566          move.l          #0,d6
+000015BE  4DF9 00002128            567          lea             BossRainArray,a6
+000015C4                           568          
+000015C4                           569  UpdateActiveRainLoop
+000015C4  0D39 00002127            570          btst            d6,(BossRainActive)
+000015CA  6600 0016                571          bne             UpdateActiveRainFound   
+000015CE  5206                     572          add.b           #1,d6
+000015D0  DDFC 00000012            573          add.l           #BOSS_RAIN_DATA_SIZE_IN_BYTES,a6
+000015D6  BC3C 0004                574          cmp.b           #BOSS_MAX_RAIN,d6
+000015DA  6E00 004A                575          bgt             RainUpdateDone
+000015DE  4EF8 15C4                576          jmp             UpdateActiveRainLoop
+000015E2                           577  
+000015E2                           578  UpdateActiveRainFound   
+000015E2                           579              
+000015E2  4EB9 000015FC            580          jsr             UpdateSpecificRainAtA6
+000015E8  5206                     581          add.b           #1,d6
+000015EA  DDFC 00000012            582          add.l           #BOSS_RAIN_DATA_SIZE_IN_BYTES,a6
+000015F0  BC3C 0004                583          cmp.b           #BOSS_MAX_RAIN,d6
+000015F4  6E00 0030                584          bgt             RainUpdateDone
+000015F8  4EF8 15C4                585          jmp             UpdateActiveRainLoop
+000015FC                           586          
+000015FC                           587  UpdateSpecificRainAtA6
+000015FC                           588      
+000015FC  202E 0004                589          move.l          4(a6),d0
+00001600  0680 00000180            590          add.l           #INIITAL_DROP_SPEED,d0
+00001606                           591          
+00001606  B0BC 00018600            592          cmp.l           #DROPPER_BOTTOM_OF_SCREEN<<8,d0
+0000160C  6E00 0008                593          bgt             DestroyRain
+00001610                           594          
+00001610  2D40 0004                595          move.l          d0,4(a6)
+00001614                           596          
+00001614  4E75                     597          rts
+00001616                           598  DestroyRain
+00001616                           599  
+00001616  2D7C 00000186 0004       600          move.l          #DROPPER_BOTTOM_OF_SCREEN,4(a6)
+0000161E  0DB9 00002127            601          bclr            d6,(BossRainActive)
+00001624                           602          
+00001624  4E75                     603          rts
+00001626                           604  
+00001626                           605  RainUpdateDone
+00001626  4E75                     606          rts
+00001628                           607          
+00001628                           608  DrawBossRain
+00001628                           609  
+00001628  7C00                     610          move.l          #0,d6
+0000162A  4DF9 00002128            611          lea             BossRainArray,a6
+00001630                           612          
+00001630                           613  DrawActiveRainLoop
+00001630  0D39 00002127            614          btst            d6,(BossRainActive)
+00001636  6600 0016                615          bne             DrawActiveRainFound
+0000163A  5206                     616          add.b           #1,d6
+0000163C  DDFC 00000012            617          add.l           #BOSS_RAIN_DATA_SIZE_IN_BYTES,a6
+00001642  BC3C 0004                618          cmp.b           #BOSS_MAX_RAIN,d6
+00001646  6E00 0020                619          bgt             AllBossRainDrawn
+0000164A  4EF8 1630                620          jmp             DrawActiveRainLoop
+0000164E                           621  
+0000164E                           622  DrawActiveRainFound   
+0000164E                           623              
+0000164E  4EB9 0000166A            624          jsr             DrawSpecificRainAtA6
+00001654  5206                     625          add.b           #1,d6
+00001656  DDFC 00000012            626          add.l           #BOSS_RAIN_DATA_SIZE_IN_BYTES,a6
+0000165C  BC3C 0004                627          cmp.b           #BOSS_MAX_RAIN,d6
+00001660  6E00 0006                628          bgt             AllBossRainDrawn
+00001664  4EF8 1630                629          jmp             DrawActiveRainLoop
+00001668                           630          
+00001668                           631  AllBossRainDrawn
+00001668                           632              
+00001668  4E75                     633          rts
+0000166A                           634          
+0000166A                           635  DrawSpecificRainAtA6
+0000166A                           636  
+0000166A  223C 00FFFFFF            637          move.l          #WHITE,d1
+00001670  103C 0050                638              move.b              #SET_PEN_COLOR_COMMAND,d0
+00001674  4E4F                     639              trap                #15
+00001676  103C 0051                640              move.b              #SET_FILL_COLOR_COMMAND,d0
+0000167A  4E4F                     641              trap                #15
+0000167C  103C 0058                642              move.b              #DRAW_CIRCLE_COMMAND,d0
+00001680                           643  
+00001680  2216                     644          move.l          (a6),d1
+00001682  2A2E 0008                645          move.l          8(a6),d5
+00001686  E28D                     646          lsr.l           #1,d5
+00001688  E08D                     647          lsr.l           #8,d5
+0000168A  9285                     648          sub.l           d5,d1
+0000168C  242E 0004                649              move.l          4(a6),d2
+00001690  E08A                     650          lsr.l           #8,d2
+00001692  9485                     651          sub.l           d5,d2
+00001694  2A2E 0008                652          move.l          8(a6),d5
+00001698  E08D                     653          lsr.l           #8,d5
+0000169A  2601                     654          move.l          d1,d3
+0000169C  D685                     655          add.l           d5,d3
+0000169E  2802                     656          move.l          d2,d4
+000016A0  D885                     657          add.l           d5,d4
+000016A2  4E4F                     658          trap            #15
+000016A4                           659          
+000016A4  4E75                     660          rts
+000016A6                           661  
+000016A6                           662  
+000016A6  4E75                     663          rts
+000016A8                           664  
+000016A8                           665  
+000016A8                           666  
+000016A8                           667  -------------------- end include --------------------
+000016A8                           668          INCLUDE "SevenSegmentDisplay.X68"
+000016A8                           669  
+000016A8  =0000024E                670  START_X_TIME_LEFT           EQU RIGHT_SIDE_OF_SCREEN-20
+000016A8  =0000003C                671  START_Y_TIME_LEFT           EQU 60
+000016A8  =0000000C                672  X_SEGMENT_OFFSET            EQU 12
+000016A8                           673  
+000016A8                           674  DrawTimeLeft
+000016A8                           675  
+000016A8  7A00                     676          moveq.l         #0,d5
+000016AA                           677  
+000016AA  2C3C 0000024E            678          move.l          #START_X_TIME_LEFT,d6
+000016B0  7E3C                     679          move.l          #START_Y_TIME_LEFT,d7
+000016B2                           680          
+000016B2  2038 13E4                681          move.l          (TimeLeft),d0
+000016B6  80FC 000A                682          divu            #10,d0
+000016BA  4840                     683          swap            d0
+000016BC  3A00                     684          move.w          d0,d5
+000016BE  4240                     685          clr.w           d0
+000016C0  4840                     686          swap            d0
+000016C2                           687  
+000016C2  2F05                     688          move.l          d5,-(sp)
+000016C4  2F00                     689          move.l          d0,-(sp)
+000016C6  4EB9 00001706            690          jsr             DrawSegment   
+000016CC  201F                     691          move.l          (sp)+,d0  
+000016CE  2A1F                     692          move.l          (sp)+,d5
+000016D0                           693          
+000016D0  0486 0000000C            694          sub.l           #X_SEGMENT_OFFSET,d6
+000016D6                           695          
+000016D6  80FC 000A                696          divu            #10,d0
+000016DA  4840                     697          swap            d0
+000016DC  3A00                     698          move.w          d0,d5
+000016DE  4240                     699          clr.w           d0
+000016E0  4840                     700          swap            d0
+000016E2                           701  
+000016E2  2F05                     702          move.l          d5,-(sp)
+000016E4  2F00                     703          move.l          d0,-(sp)
+000016E6  4EB9 00001706            704          jsr             DrawSegment   
+000016EC  201F                     705          move.l          (sp)+,d0  
+000016EE  2A1F                     706          move.l          (sp)+,d5
+000016F0                           707          
+000016F0  0486 0000000C            708          sub.l           #X_SEGMENT_OFFSET,d6
+000016F6                           709          
+000016F6  80FC 000A                710          divu            #10,d0
+000016FA  4840                     711          swap            d0
+000016FC  3A00                     712          move.w          d0,d5
+000016FE                           713          
+000016FE  4EB9 00001706            714          jsr             DrawSegment
+00001704                           715  
+00001704  4E75                     716          rts
+00001706                           717  
+00001706                           718  DrawSegment     ;d5-num to draw d6-x d7-y
+00001706                           719  
+00001706  7200                     720          moveq.l         #0,d1
+00001708  7400                     721          moveq.l         #0,d2
+0000170A  7600                     722          moveq.l         #0,d3
+0000170C  7800                     723          moveq.l         #0,d4
+0000170E                           724  
+0000170E  7000                     725          moveq.l         #0,d0
+00001710  41F9 000017E0            726          lea             SegmentBits,a0
+00001716  43F9 000017EA            727          lea             SegmentXStart,a1
+0000171C  45F9 000017F1            728          lea             SegmentYStart,a2
+00001722  47F9 000017F8            729          lea             SegmentXEnd,a3
+00001728  49F9 000017FF            730          lea             SegmentYEnd,a4
+0000172E                           731  
+0000172E  1A30 5000                732          move.b          (a0,d5),d5
+00001732                           733                  
+00001732                           734  FindActiveSegmentsLoop
+00001732  0105                     735          btst            d0,d5
+00001734  6600 0010                736          bne             ActiveSegmentFound
+00001738  5200                     737          add.b           #1,d0
+0000173A  B03C 0007                738          cmp.b           #7,d0
+0000173E  6E00 001E                739          bgt             AllSegmentsUpdated
+00001742  4EF8 1732                740          jmp             FindActiveSegmentsLoop
+00001746                           741  
+00001746                           742  ActiveSegmentFound
+00001746  2F00                     743          move.l          d0,-(sp)
+00001748  4EB9 00001760            744          jsr             DrawActiveSegment
+0000174E  201F                     745          move.l          (sp)+,d0
+00001750  5200                     746          add.b           #1,d0
+00001752  B03C 0007                747          cmp.b           #7,d0
+00001756  6E00 0006                748          bgt             AllSegmentsUpdated
+0000175A  4EF8 1732                749          jmp             FindActiveSegmentsLoop
+0000175E                           750  
+0000175E                           751  AllSegmentsUpdated
+0000175E  4E75                     752          rts
+00001760                           753          
+00001760                           754  DrawActiveSegment
+00001760                           755  
+00001760  223C 00FFFFFF            756          move.l          #WHITE,d1
+00001766  103C 0050                757              move.b              #SET_PEN_COLOR_COMMAND,d0
+0000176A  4E4F                     758              trap                #15
+0000176C  103C 0051                759              move.b              #SET_FILL_COLOR_COMMAND,d0
+00001770  4E4F                     760              trap                #15
+00001772                           761              
+00001772                           762  
+00001772  7200                     763          moveq.l         #0,d1
+00001774  7400                     764          moveq.l         #0,d2   
+00001776  7600                     765          moveq.l         #0,d3
+00001778  7800                     766          moveq.l         #0,d4
+0000177A                           767  
+0000177A  2206                     768          move.l          d6,d1
+0000177C  2407                     769          move.l          d7,d2
+0000177E  2606                     770          move.l          d6,d3
+00001780  2807                     771          move.l          d7,d4        
+00001782                           772  
+00001782  202F 0004                773          move.l          4(sp),d0
+00001786                           774  
+00001786  D231 0000                775          add.b           (a1,d0),d1
+0000178A  D432 0000                776          add.b           (a2,d0),d2
+0000178E  D633 0000                777          add.b           (a3,d0),d3
+00001792  D834 0000                778          add.b           (a4,d0),d4
+00001796                           779          
+00001796  103C 0057                780          move.b          #DRAW_RECT_COMMAND,d0
+0000179A  4E4F                     781          trap            #15
+0000179C                           782          
+0000179C  4E75                     783          rts
+0000179E                           784          
+0000179E                           785  ClearSegments
+0000179E                           786  
+0000179E  223C 00FF0000            787          move.l          #$00FF0000,d1
+000017A4  103C 0050                788              move.b              #SET_PEN_COLOR_COMMAND,d0
+000017A8  4E4F                     789              trap                #15
+000017AA  103C 0051                790              move.b              #SET_FILL_COLOR_COMMAND,d0
+000017AE  4E4F                     791              trap                #15
+000017B0                           792              
+000017B0  103C 0057                793              move.b              #DRAW_RECT_COMMAND,d0
+000017B4                           794  
+000017B4  223C 0000022F            795          move.l          #START_X_TIME_LEFT-3*X_SEGMENT_OFFSET+5,d1
+000017BA  743C                     796          move.l          #START_Y_TIME_LEFT,d2
+000017BC  263C 00000257            797          move.l          #START_X_TIME_LEFT-3*X_SEGMENT_OFFSET+5+40,d3
+000017C2  7848                     798          move.l          #START_Y_TIME_LEFT+12,d4
+000017C4                           799          
+000017C4  4E4F                     800          trap            #15
+000017C6                           801          
+000017C6  4E75                     802          rts
+000017C8                           803          
+000017C8                           804  CalculateTimeLeft
+000017C8                           805           
+000017C8  2038 13E0                806          move.l          (EndTime),d0
+000017CC  90B8 13DC                807          sub.l           (OldTime),d0
+000017D0  80FC 0064                808          divu            #100,d0
+000017D4  4840                     809          swap            d0
+000017D6  4240                     810          clr.w           d0
+000017D8  4840                     811          swap            d0
+000017DA  21C0 13E4                812          move.l          d0,(TimeLeft)
+000017DE                           813  
+000017DE  4E75                     814          rts       
+000017E0                           815          
+000017E0= 3F 06 5B 4F 66 6D ...    816  SegmentBits         dc.b $3F,$06,$5B,$4f,$66,$6D,$7D,$07,$7F,$67
+000017EA                           817  
+000017EA= FC 05 05 04 FB FB FC     818  SegmentXStart       dc.b -4,5,5,4,-5,-5,-4
+000017F1= FB FF 04 05 01 FC 00     819  SegmentYStart       dc.b -5,-1,4,5,1,-4,0
+000017F8                           820  
+000017F8= 04 05 05 FC FB FB 04     821  SegmentXEnd         dc.b 4,5,5,-4,-5,-5,4
+000017FF= FB FC 01 05 04 FF 00     822  SegmentYEnd         dc.b -5,-4,1,5,4,-1,0
+00001806                           823  
+00001806                           824  
+00001806                           825  
+00001806                           826  
+00001806                           827  
+00001806                           828  
+00001806                           829  
+00001806                           830  -------------------- end include --------------------
+00001806                           831          INCLUDE "Collisions.x68"
+00001806                           832  
+00001806  =000000FF                833  BOSS_START_HEALTH               EQU 255
+00001806  =000000FF                834  PLAYER_START_HEALTH             EQU 255
+00001806                           835  
+00001806  =0000001E                836  BOSS_SHOOT_DAMAGE               EQU 30
+00001806  =0000001E                837  BOSS_RAIN_DAMAGE                EQU 30
+00001806  =00000028                838  BOSS_LAVA_DAMAGE                EQU 40
+00001806  =00000028                839  BOSS_JUMP_DAMAGE                EQU 40
+00001806                           840  
+00001806  =00000008                841  PLAYER_BULLET_DAMAGE            EQU 8
+00001806  =00000064                842  PLAYER_INVULNERABILITY_TIME     EQU 100 
+00001806                           843          
+00001806                           844  CheckCollision
+00001806                           845  
+00001806  4EB9 000018AC            846          jsr             CheckPlayerBullet
+0000180C  4EB9 00001826            847          jsr             CheckPlayerAndBossCollision
+00001812  4EB9 0000195E            848          jsr             CheckBossBullets
+00001818  4EB9 00001A26            849          jsr             CheckBossRain
+0000181E  4EB9 00001AE8            850          jsr             CheckLava
+00001824                           851  
+00001824  4E75                     852          rts
+00001826                           853          
+00001826                           854  CheckPlayerAndBossCollision
+00001826                           855  
+00001826  2038 13DC                856          move.l          (OldTime),d0
+0000182A                           857  
+0000182A  B0B9 00001B6E            858          cmp.l           (PlayerVulnerabilityTime),d0
+00001830  6D00 0078                859          blt             BossDidNotCollide
+00001834                           860  
+00001834  4DF9 00002636            861          lea             PlayerPositionAndSize,a6
+0000183A  4BF9 00002012            862          lea             BossPositionAndSize,a5
+00001840                           863          
+00001840  2216                     864          move.l          (a6),d1
+00001842  242E 0004                865          move.l          4(a6),d2
+00001846                           866          
+00001846  262D 0004                867          move.l          4(a5),d3
+0000184A  0483 00001400            868          sub.l           #PLAYER_HEIGHT<<8,d3
+00001850                           869          
+00001850  B682                     870          cmp.l           d2,d3
+00001852  6E00 0056                871          bgt             BossDidNotCollide
+00001856  0683 00003C00            872          add.l           #PLAYER_HEIGHT<<8+BOSS_HEIGHT<<8,d3
+0000185C  B682                     873          cmp.l           d2,d3
+0000185E  6D00 004A                874          blt             BossDidNotCollide
+00001862  2615                     875          move.l          (a5),d3
+00001864  0483 00001400            876          sub.l           #PLAYER_WIDTH<<8,d3
+0000186A  B681                     877          cmp.l           d1,d3
+0000186C  6E00 003C                878          bgt             BossDidNotCollide
+00001870  0683 00003C00            879          add.l           #PLAYER_WIDTH<<8+BOSS_WIDTH<<8,d3
+00001876  B681                     880          cmp.l           d1,d3
+00001878  6D00 0030                881          blt             BossDidNotCollide
+0000187C                           882          
+0000187C  0680 00000064            883          add.l           #PLAYER_INVULNERABILITY_TIME,d0
+00001882  23C0 00001B6E            884          move.l          d0,(PlayerVulnerabilityTime)
+00001888  04B9 00000028 00001B6A   885          sub.l           #BOSS_JUMP_DAMAGE,(PlayerHealth)
+00001892                           886  
+00001892  2839 00001B6A            887          move.l          (PlayerHealth),d4
+00001898                           888  
+00001898  2604                     889          move.l          d4,d3
+0000189A  4843                     890          swap            d3
+0000189C  1604                     891          move.b          d4,d3
+0000189E  E14B                     892          lsl.w           #8,d3
+000018A0  1604                     893          move.b          d4,d3
+000018A2                           894  
+000018A2  23C3 0000265A            895          move.l          d3,(PlayerColor)
+000018A8                           896  
+000018A8  4E75                     897          rts
+000018AA                           898  BossDidNotCollide
+000018AA                           899          
+000018AA  4E75                     900          rts
+000018AC                           901  
+000018AC                           902  CheckPlayerBullet
+000018AC                           903          
+000018AC  7000                     904          move.l          #0,d0
+000018AE  4DF9 00002936            905          lea             BulletOnePosition,a6
+000018B4                           906          
+000018B4                           907  CheckPlayerBulletLoop
+000018B4  0139 00002935            908          btst            d0,(ActiveBullets)
+000018BA  6600 0016                909          bne             CheckActiveBullet
+000018BE  5200                     910          add.b           #1,d0
+000018C0  DDFC 0000000A            911          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+000018C6  B03C 0003                912          cmp.b           #MAX_ALLOWED_BULLETS,d0
+000018CA  6E00 0020                913          bgt             AllPlayerBulletChecked
+000018CE  4EF8 18B4                914          jmp             CheckPlayerBulletLoop
+000018D2                           915  
+000018D2                           916  CheckActiveBullet
+000018D2                           917  
+000018D2  4EB9 000018EE            918          jsr             CheckPlayerBulletCollisionAtA6
+000018D8  5200                     919          add.b           #1,d0
+000018DA  DDFC 0000000A            920          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+000018E0  B03C 0003                921          cmp.b           #MAX_ALLOWED_BULLETS,d0
+000018E4  6E00 0006                922          bgt             AllPlayerBulletChecked
+000018E8  4EF8 18B4                923          jmp             CheckPlayerBulletLoop
+000018EC                           924  
+000018EC                           925  AllPlayerBulletChecked
+000018EC                           926              
+000018EC  4E75                     927          rts
+000018EE                           928          
+000018EE                           929  CheckPlayerBulletCollisionAtA6
+000018EE                           930          
+000018EE  2216                     931          move.l          (a6),d1
+000018F0  242E 0004                932          move.l          4(a6),d2
+000018F4                           933          
+000018F4  4BF9 00002012            934          lea             BossPositionAndSize,a5
+000018FA                           935          
+000018FA  262D 0004                936          move.l          4(a5),d3
+000018FE  0483 00000A00            937          sub.l           #BULLET_SIZE_HEIGHT<<8,d3
+00001904                           938          
+00001904  B682                     939          cmp.l           d2,d3
+00001906  6E00 0054                940          bgt             BulletDidNotCollide
+0000190A  0683 00003200            941          add.l           #BULLET_SIZE_HEIGHT<<8+BOSS_HEIGHT<<8,d3
+00001910  B682                     942          cmp.l           d2,d3
+00001912  6D00 0048                943          blt             BulletDidNotCollide
+00001916  2615                     944          move.l          (a5),d3
+00001918  0483 00000A00            945          sub.l           #BULLET_SIZE_WIDTH<<8,d3
+0000191E  B681                     946          cmp.l           d1,d3
+00001920  6E00 003A                947          bgt             BulletDidNotCollide
+00001924  0683 00003200            948          add.l           #BULLET_SIZE_WIDTH<<8+BOSS_WIDTH<<8,d3
+0000192A  B681                     949          cmp.l           d1,d3
+0000192C  6D00 002E                950          blt             BulletDidNotCollide
+00001930                           951          
+00001930  2F00                     952          move.l          d0,-(sp)
+00001932  4EB9 000028BE            953          jsr             EraseBullets
+00001938  201F                     954          move.l          (sp)+,d0        
+0000193A                           955          
+0000193A  51B9 00001B66            956          sub.l           #PLAYER_BULLET_DAMAGE,(BossHealth)
+00001940  01B9 00002935            957          bclr            d0,(ActiveBullets)
+00001946                           958          
+00001946  2839 00001B66            959          move.l          (BossHealth),d4
+0000194C                           960          
+0000194C  2604                     961          move.l          d4,d3
+0000194E  4843                     962          swap            d3
+00001950  1604                     963          move.b          d4,d3
+00001952  E14B                     964          lsl.w           #8,d3
+00001954  1604                     965          move.b          d4,d3
+00001956  23C3 0000202C            966          move.l          d3,(BossColor)
+0000195C                           967          
+0000195C                           968  BulletDidNotCollide
+0000195C  4E75                     969          rts
+0000195E                           970          
+0000195E                           971          
+0000195E                           972  CheckBossBullets
+0000195E                           973  
+0000195E  7C00                     974          move.l          #0,d6
+00001960  4DF9 00002036            975          lea             BossBulletArray,a6
+00001966                           976          
+00001966                           977  CheckBossBulletsLoop
+00001966  0D39 00002031            978          btst            d6,(BossBulletsActive)
+0000196C  6600 0016                979          bne             ActiveBossBullet
+00001970  5206                     980          add.b           #1,d6
+00001972  DDFC 0000000A            981          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001978  BC3C 0006                982          cmp.b           #BOSS_MAX_BULLETS,d6
+0000197C  6E00 0020                983          bgt             AllBossBulletChecked
+00001980  4EF8 1966                984          jmp             CheckBossBulletsLoop
+00001984                           985  
+00001984                           986  ActiveBossBullet
+00001984                           987              
+00001984  4EB9 000019A0            988          jsr             CheckBossBulletCollisionAtA6
+0000198A  5206                     989          add.b           #1,d6
+0000198C  DDFC 0000000A            990          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00001992  BC3C 0006                991          cmp.b           #BOSS_MAX_BULLETS,d6
+00001996  6E00 0006                992          bgt             AllBossBulletChecked
+0000199A  4EF8 1966                993          jmp             CheckBossBulletsLoop
+0000199E                           994          
+0000199E                           995  AllBossBulletChecked
+0000199E                           996              
+0000199E  4E75                     997          rts
+000019A0                           998          
+000019A0                           999  CheckBossBulletCollisionAtA6
+000019A0                          1000  
+000019A0  2216                    1001          move.l          (a6),d1
+000019A2  242E 0004               1002          move.l          4(a6),d2
+000019A6                          1003          
+000019A6  4BF9 00002636           1004          lea             PlayerPositionAndSize,a5
+000019AC                          1005          
+000019AC  262D 0004               1006          move.l          4(a5),d3
+000019B0  0483 00000A00           1007          sub.l           #BOSS_BULLET_HEIGHT<<8,d3
+000019B6                          1008          
+000019B6  B682                    1009          cmp.l           d2,d3
+000019B8  6E00 006A               1010          bgt             BossBulletDidNotCollide
+000019BC  0683 00001E00           1011          add.l           #BOSS_BULLET_HEIGHT<<8+PLAYER_HEIGHT<<8,d3
+000019C2  B682                    1012          cmp.l           d2,d3
+000019C4  6D00 005E               1013          blt             BossBulletDidNotCollide
+000019C8  2615                    1014          move.l          (a5),d3
+000019CA  0483 00000A00           1015          sub.l           #BOSS_BULLET_WIDTH<<8,d3
+000019D0  B681                    1016          cmp.l           d1,d3
+000019D2  6E00 0050               1017          bgt             BossBulletDidNotCollide
+000019D6  0683 00001E00           1018          add.l           #BOSS_BULLET_WIDTH<<8+PLAYER_WIDTH<<8,d3
+000019DC  B681                    1019          cmp.l           d1,d3
+000019DE  6D00 0044               1020          blt             BossBulletDidNotCollide
+000019E2                          1021          
+000019E2  0DB9 00002031           1022          bclr            d6,(BossBulletsActive)
+000019E8                          1023          
+000019E8  2038 13DC               1024          move.l          (OldTime),d0
+000019EC                          1025  
+000019EC  B0B9 00001B6E           1026          cmp.l           (PlayerVulnerabilityTime),d0
+000019F2  6D00 0030               1027          blt             BossBulletDidNotCollide
+000019F6                          1028          
+000019F6  0680 00000064           1029          add.l           #PLAYER_INVULNERABILITY_TIME,d0
+000019FC  23C0 00001B6E           1030          move.l          d0,(PlayerVulnerabilityTime)
+00001A02  04B9 0000001E 00001B6A  1031          sub.l           #BOSS_SHOOT_DAMAGE,(PlayerHealth)
+00001A0C                          1032          
+00001A0C  2839 00001B6A           1033          move.l          (PlayerHealth),d4
+00001A12                          1034  
+00001A12  2604                    1035          move.l          d4,d3
+00001A14  4843                    1036          swap            d3
+00001A16  1604                    1037          move.b          d4,d3
+00001A18  E14B                    1038          lsl.w           #8,d3
+00001A1A  1604                    1039          move.b          d4,d3
+00001A1C                          1040  
+00001A1C  23C3 0000265A           1041          move.l          d3,(PlayerColor)
+00001A22                          1042          
+00001A22  4E75                    1043          rts
+00001A24                          1044  
+00001A24                          1045  BossBulletDidNotCollide
+00001A24  4E75                    1046          rts
+00001A26                          1047          
+00001A26                          1048          
+00001A26                          1049  CheckBossRain
+00001A26                          1050  
+00001A26  7C00                    1051          move.l          #0,d6
+00001A28  4DF9 00002128           1052          lea             BossRainArray,a6
+00001A2E                          1053          
+00001A2E                          1054  CheckBossRainLoop
+00001A2E  0D39 00002127           1055          btst            d6,(BossRainActive)
+00001A34  6600 0016               1056          bne             ActiveBossRain
+00001A38  5206                    1057          add.b           #1,d6
+00001A3A  DDFC 00000012           1058          add.l           #BOSS_RAIN_DATA_SIZE_IN_BYTES,a6
+00001A40  BC3C 0004               1059          cmp.b           #BOSS_MAX_RAIN,d6
+00001A44  6E00 0020               1060          bgt             AllBossRainChecked
+00001A48  4EF8 1A2E               1061          jmp             CheckBossRainLoop
+00001A4C                          1062  
+00001A4C                          1063  ActiveBossRain
+00001A4C                          1064              
+00001A4C  4EB9 00001A68           1065          jsr             CheckBossRainCollisionAtA6
+00001A52  5206                    1066          add.b           #1,d6
+00001A54  DDFC 00000012           1067          add.l           #BOSS_RAIN_DATA_SIZE_IN_BYTES,a6
+00001A5A  BC3C 0004               1068          cmp.b           #BOSS_MAX_RAIN,d6
+00001A5E  6E00 0006               1069          bgt             AllBossRainChecked
+00001A62  4EF8 1A2E               1070          jmp             CheckBossRainLoop
+00001A66                          1071          
+00001A66                          1072  AllBossRainChecked
+00001A66                          1073              
+00001A66  4E75                    1074          rts
+00001A68                          1075          
+00001A68                          1076  CheckBossRainCollisionAtA6
+00001A68                          1077  
+00001A68  2216                    1078          move.l          (a6),d1
+00001A6A  242E 0004               1079          move.l          4(a6),d2
+00001A6E  E189                    1080          lsl.l           #8,d1
+00001A70                          1081          
+00001A70  4BF9 00002636           1082          lea             PlayerPositionAndSize,a5
+00001A76                          1083          
+00001A76  262D 0004               1084          move.l          4(a5),d3
+00001A7A  0483 00000A00           1085          sub.l           #DROP_SIZE,d3
+00001A80                          1086          
+00001A80  B682                    1087          cmp.l           d2,d3
+00001A82  6EA0                    1088          bgt             BossBulletDidNotCollide
+00001A84  0683 00001E00           1089          add.l           #DROP_SIZE+PLAYER_HEIGHT<<8,d3
+00001A8A  B682                    1090          cmp.l           d2,d3
+00001A8C  6D96                    1091          blt             BossBulletDidNotCollide
+00001A8E  2615                    1092          move.l          (a5),d3
+00001A90  0483 00000A00           1093          sub.l           #DROP_SIZE,d3
+00001A96  B681                    1094          cmp.l           d1,d3
+00001A98  6E8A                    1095          bgt             BossBulletDidNotCollide
+00001A9A  0683 00001E00           1096          add.l           #DROP_SIZE+PLAYER_WIDTH<<8,d3
+00001AA0  B681                    1097          cmp.l           d1,d3
+00001AA2  6D80                    1098          blt             BossBulletDidNotCollide
+00001AA4                          1099          
+00001AA4  0DB9 00002127           1100          bclr            d6,(BossRainActive)
+00001AAA                          1101          
+00001AAA  2038 13DC               1102          move.l          (OldTime),d0
+00001AAE                          1103  
+00001AAE  B0B9 00001B6E           1104          cmp.l           (PlayerVulnerabilityTime),d0
+00001AB4  6D00 FF6E               1105          blt             BossBulletDidNotCollide
+00001AB8                          1106          
+00001AB8  0680 00000064           1107          add.l           #PLAYER_INVULNERABILITY_TIME,d0
+00001ABE  23C0 00001B6E           1108          move.l          d0,(PlayerVulnerabilityTime)
+00001AC4  04B9 0000001E 00001B6A  1109          sub.l           #BOSS_SHOOT_DAMAGE,(PlayerHealth)
+00001ACE                          1110          
+00001ACE  2839 00001B6A           1111          move.l          (PlayerHealth),d4
+00001AD4                          1112  
+00001AD4  2604                    1113          move.l          d4,d3
+00001AD6  4843                    1114          swap            d3
+00001AD8  1604                    1115          move.b          d4,d3
+00001ADA  E14B                    1116          lsl.w           #8,d3
+00001ADC  1604                    1117          move.b          d4,d3
+00001ADE                          1118  
+00001ADE  23C3 0000265A           1119          move.l          d3,(PlayerColor)
+00001AE4                          1120          
+00001AE4  4E75                    1121          rts
+00001AE6                          1122  
+00001AE6                          1123  BossRainDidNotCollide
+00001AE6  4E75                    1124          rts
+00001AE8                          1125  
+00001AE8                          1126  CheckLava
+00001AE8                          1127  
+00001AE8  2038 13DC               1128          move.l          (OldTime),d0
+00001AEC                          1129  
+00001AEC  B0B9 00001B6E           1130          cmp.l           (PlayerVulnerabilityTime),d0
+00001AF2  6D00 0070               1131          blt             LavaCheckDone
+00001AF6                          1132  
+00001AF6  2E39 00002248           1133          move.l          (BossLavaFillPercent),d7
+00001AFC  BEBC 00006400           1134          cmp.l           #100<<8,d7
+00001B02  6D00 0060               1135          blt             LavaCheckDone
+00001B06                          1136          
+00001B06  2C3C 00000190           1137          move.l          #BLACK_BOX_BOTTOM_SIDE_OF_SCREEN,d6
+00001B0C  2E39 00002248           1138          move.l          (BossLavaFillPercent),d7
+00001B12  E08F                    1139          lsr.l           #8,d7
+00001B14  0487 00000064           1140          sub.l           #100,d7
+00001B1A  9C87                    1141          sub.l           d7,d6
+00001B1C                          1142          
+00001B1C  41F9 00002636           1143          lea             PlayerPositionAndSize,a0
+00001B22  2028 0004               1144          move.l          4(a0),d0
+00001B26  E088                    1145          lsr.l           #8,d0
+00001B28                          1146          
+00001B28  0486 00000014           1147          sub.l           #PLAYER_HEIGHT,d6
+00001B2E                          1148          
+00001B2E  BC80                    1149          cmp.l           d0,d6
+00001B30  6E00 0032               1150          bgt             LavaCheckDone
+00001B34                          1151          
+00001B34  2038 13DC               1152          move.l          (OldTime),d0
+00001B38  0680 00000064           1153          add.l           #PLAYER_INVULNERABILITY_TIME,d0
+00001B3E  23C0 00001B6E           1154          move.l          d0,(PlayerVulnerabilityTime)
+00001B44  04B9 00000028 00001B6A  1155          sub.l           #BOSS_LAVA_DAMAGE,(PlayerHealth)
+00001B4E                          1156          
+00001B4E  2839 00001B6A           1157          move.l          (PlayerHealth),d4
+00001B54                          1158  
+00001B54  2604                    1159          move.l          d4,d3
+00001B56  4843                    1160          swap            d3
+00001B58  1604                    1161          move.b          d4,d3
+00001B5A  E14B                    1162          lsl.w           #8,d3
+00001B5C  1604                    1163          move.b          d4,d3
+00001B5E                          1164  
+00001B5E  23C3 0000265A           1165          move.l          d3,(PlayerColor)
+00001B64                          1166          
+00001B64                          1167  LavaCheckDone
+00001B64  4E75                    1168          rts
+00001B66                          1169          
+00001B66= 000000FF                1170  BossHealth                  dc.l  BOSS_START_HEALTH
+00001B6A= 000000FF                1171  PlayerHealth                dc.l  PLAYER_START_HEALTH
+00001B6E= 00000000                1172  PlayerVulnerabilityTime     dc.l  0
+00001B72                          1173  
+00001B72                          1174  
+00001B72                          1175  
+00001B72                          1176  
+00001B72                          1177  
+00001B72                          1178  
+00001B72                          1179  
+00001B72                          1180  
+00001B72                          1181  
+00001B72                          1182  
+00001B72                          1183  
+00001B72                          1184  
+00001B72                          1185  
+00001B72                          1186  
+00001B72                          1187  -------------------- end include --------------------
+00001B72                          1188          INCLUDE "Boss.x68"
+00001B72  =00000190               1189  BOSS_START_X                        EQU 400
+00001B72  =00000028               1190  BOSS_WIDTH                          EQU 40
+00001B72  =00000028               1191  BOSS_HEIGHT                         EQU 40
+00001B72                          1192  
+00001B72  =00000800               1193  BOSS_VELOCITY_UP                            EQU $800
+00001B72  =00000030               1194  BOSS_GRAVITY_SIZE                   EQU $30
+00001B72  =0000002A               1195  BOSS_TIME_TO_JUMP_AND_FALL          EQU (BOSS_VELOCITY_UP/BOSS_GRAVITY_SIZE)
+00001B72                          1196  
+00001B72  =00FFFF00               1197  BOSS_BULLET_COLOR                   EQU $00FFFF00
+00001B72                          1198  
+00001B72  =00000300               1199  BOSS_BULLET_SPEED                   EQU $300
+00001B72  =00000032               1200  BOSS_TIME_BETWEEN_SHOT              EQU 50
+00001B72  =00000003               1201  BOSS_BULLET_COUNT_SHOT              EQU 3
+00001B72  =0000000A               1202  BOSS_BULLET_WIDTH                   EQU 10
+00001B72  =0000000A               1203  BOSS_BULLET_HEIGHT                  EQU 10
+00001B72  =00000019               1204  BOSS_SHOT_HEIGHT_OFFSET             EQU 25
+00001B72                          1205  
+00001B72  =00000006               1206  BOSS_MAX_BULLETS                    EQU 6
+00001B72  =00000004               1207  BOSS_MAX_RAIN                       EQU 4
+00001B72  =0000000A               1208  BOSS_BULLET_DATA_SIZE_IN_BYTES      EQU 10
+00001B72  =00000012               1209  BOSS_RAIN_DATA_SIZE_IN_BYTES        EQU 18
+00001B72                          1210  
+00001B72  =0000000A               1211  BOSS_WAIT_TIME                      EQU 10
+00001B72                          1212  
+00001B72  =00000180               1213  BOSS_LAVA_FILL_RATE                 EQU 3<<7
+00001B72                          1214  
+00001B72                          1215  UpdateBoss
+00001B72                          1216          
+00001B72  2039 00002012           1217          move.l          (BossPositionAndSize),d0
+00001B78  2239 00002636           1218          move.l          (PlayerPositionAndSize),d1 
+00001B7E  B280                    1219          cmp.l           d0,d1
+00001B80  6D00 0010               1220          blt             UpdateBossLookLeft        
+00001B84                          1221  UpdateBossLookRight        
+00001B84  13FC 0001 0000202A      1222          move.b          #1,(BossShouldFaceRight)
+00001B8C  4EF9 00001B9A           1223          jmp             UpdateBossLookDone
+00001B92                          1224  UpdateBossLookLeft
+00001B92  13FC 0000 0000202A      1225          move.b          #0,(BossShouldFaceRight)
+00001B9A                          1226          
+00001B9A                          1227  UpdateBossLookDone
+00001B9A  7000                    1228          moveq.l         #0,d0
+00001B9C  1039 0000202B           1229          move.b          (BossState),d0
+00001BA2  6700 002C               1230          beq             GetNewState
+00001BA6                          1231  
+00001BA6                          1232  CheckBossState
+00001BA6                          1233         
+00001BA6  2838 13DC               1234          move.l          (OldTime),d4
+00001BAA  2A39 00002250           1235          move.l          (BossTimeStateStart),d5
+00001BB0  6700 0008               1236          beq             DoState
+00001BB4  BA84                    1237          cmp.l           d4,d5
+00001BB6  6E00 0044               1238          bgt             BossStateNeedsToWait
+00001BBA                          1239         
+00001BBA                          1240  DoState
+00001BBA  41F9 00002264           1241          lea             UpdateStateTable,a0
+00001BC0  5980                    1242          sub.l           #4,d0
+00001BC2  2030 0000               1243          move.l          (a0,d0),d0
+00001BC6  2040                    1244          move.l          d0,a0
+00001BC8  4E90                    1245          jsr             (a0)
+00001BCA  4EF9 00001BFE           1246          jmp             BossStateUpdateDone
+00001BD0                          1247          
+00001BD0                          1248  GetNewState
+00001BD0                          1249  
+00001BD0  2A38 13DC               1250          move.l          (OldTime),d5
+00001BD4  0685 0000000A           1251          add.l           #BOSS_WAIT_TIME,d5
+00001BDA  23C5 00002250           1252          move.l          d5,(BossTimeStateStart)
+00001BE0                          1253  
+00001BE0  4EB9 00050B56           1254          jsr             getRandomLongIntoD6
+00001BE6                          1255  ;                move.l           #3,d6
+00001BE6  CCBC 00000003           1256          and.l           #3,d6
+00001BEC  E58E                    1257          lsl.l           #2,d6
+00001BEE  41F9 00002254           1258          lea             SetStateTable,a0
+00001BF4  D1C6                    1259          add.l           d6,a0
+00001BF6  2C10                    1260          move.l          (a0),d6
+00001BF8  2046                    1261          move.l          d6,a0
+00001BFA  4E90                    1262          jsr             (a0)
+00001BFC                          1263          
+00001BFC                          1264  BossStateNeedsToWait
+00001BFC  2A05                    1265          move.l          d5,d5
+00001BFE                          1266  BossStateUpdateDone
+00001BFE  4DF9 00002012           1267          lea             BossPositionAndSize,a6
+00001C04  2039 00002026           1268          move.l          (BossOnGround),d0  
+00001C0A  6600 000E               1269          bne             BossReachFloor
+00001C0E  2038 13D8               1270          move.l          (DeltaTime),d0
+00001C12  C1FC 0040               1271          muls            #GRAVITY_SIZE,d0
+00001C16  D16E 0012               1272          add.w           d0,18(a6)
+00001C1A                          1273  BossReachFloor
+00001C1A                          1274  
+00001C1A  4E75                    1275          rts
+00001C1C                          1276  
+00001C1C                          1277  DrawBoss
+00001C1C  223C 00FFFFFF           1278          move.l          #WHITE,d1
+00001C22  7050                    1279          move.l          #SET_PEN_COLOR_COMMAND,d0
+00001C24  4E4F                    1280          trap            #15
+00001C26                          1281  
+00001C26  4DF9 00002012           1282          lea             BossPositionAndSize,a6
+00001C2C                          1283  
+00001C2C  2238 1B66               1284          move.l          (BossHealth),d1
+00001C30  6B00 008E               1285          bmi             DrawDoneBoss
+00001C34                          1286  
+00001C34  7400                    1287          moveq.l         #0,d2
+00001C36  2239 0000202C           1288          move.l          (BossColor),d1
+00001C3C  1439 0000202B           1289          move.b          (BossState),d2
+00001C42  6700 001A               1290          beq             StateZeroDraw
+00001C46  5902                    1291          sub.b           #4,d2
+00001C48  6700 0020               1292          beq             StateOneDraw
+00001C4C  5902                    1293          sub.b           #4,d2
+00001C4E  6700 0026               1294          beq             StateTwoDraw
+00001C52  5902                    1295          sub.b           #4,d2
+00001C54  6700 002C               1296          beq             StateThreeDraw
+00001C58  5902                    1297          sub.b           #4,d2
+00001C5A  6700 0032               1298          beq             StateFourDraw
+00001C5E                          1299  StateZeroDraw
+00001C5E  C2BC 00FFFFFF           1300          and.l           #$FFFFFF,d1
+00001C64  4EF9 00001C9A           1301          jmp             ChangeColorDone
+00001C6A                          1302  StateOneDraw
+00001C6A  C2BC 00FF0000           1303          and.l           #$FF0000,d1       
+00001C70  4EF9 00001C9A           1304          jmp             ChangeColorDone
+00001C76                          1305  StateTwoDraw
+00001C76  C2BC 0000FF00           1306          and.l           #$00FF00,d1
+00001C7C  4EF9 00001C9A           1307          jmp             ChangeColorDone
+00001C82                          1308  StateThreeDraw
+00001C82  C2BC 000000FF           1309          and.l           #$0000FF,d1
+00001C88  4EF9 00001C9A           1310          jmp             ChangeColorDone
+00001C8E                          1311  StateFourDraw
+00001C8E  C2BC 00FF00FF           1312          and.l           #$FF00FF,d1
+00001C94  4EF9 00001C9A           1313          jmp             ChangeColorDone
+00001C9A                          1314  ChangeColorDone
+00001C9A                          1315  
+00001C9A  7051                    1316              move.l          #SET_FILL_COLOR_COMMAND,d0
+00001C9C  4E4F                    1317              trap                #15
+00001C9E                          1318  
+00001C9E  103C 0058               1319              move.b              #DRAW_CIRCLE_COMMAND,d0
+00001CA2  2216                    1320              move.l          (a6),d1 
+00001CA4  E089                    1321              lsr.l           #8,d1
+00001CA6  242E 0004               1322              move.l          4(a6),d2
+00001CAA  E08A                    1323              lsr.l           #8,d2
+00001CAC  262E 0008               1324              move.l          8(a6),d3
+00001CB0  D696                    1325              add.l           (a6),d3
+00001CB2  E08B                    1326              lsr.l           #8,d3
+00001CB4  282E 000C               1327              move.l          12(a6),d4
+00001CB8  D8AE 0004               1328              add.l           4(a6),d4
+00001CBC  E08C                    1329              lsr.l           #8,d4       
+00001CBE  4E4F                    1330              trap                #15
+00001CC0                          1331  
+00001CC0                          1332  DrawDoneBoss
+00001CC0  4E75                    1333              rts
+00001CC2                          1334          
+00001CC2                          1335  EraseBoss: ;a6 memory location of x,y,w,h,v_x,v_y
+00001CC2                          1336         
+00001CC2  4DF9 00002012           1337          lea             BossPositionAndSize,a6
+00001CC8  2016                    1338          move.l          (a6),d0
+00001CCA  E088                    1339          lsr.l           #8,d0
+00001CCC  5380                    1340          sub.l           #1,d0
+00001CCE  222E 0004               1341          move.l          4(a6),d1
+00001CD2  E089                    1342          lsr.l           #8,d1
+00001CD4  0481 FFFFFFFF           1343          sub.l           #-1,d1
+00001CDA  242E 0008               1344          move.l          8(a6),d2
+00001CDE  E08A                    1345          lsr.l           #8,d2
+00001CE0  41F9 00002F20           1346          lea.l           Bitmap, a0
+00001CE6  2000                    1347          move.l          d0,d0
+00001CE8  2201                    1348          move.l          d1,d1
+00001CEA  2602                    1349          move.l          d2,d3
+00001CEC  5482                    1350          add.l           #2,d2
+00001CEE  2402                    1351          move.l          d2,d2
+00001CF0  2800                    1352          move.l          d0,d4
+00001CF2  2A01                    1353          move.l          d1,d5
+00001CF4                          1354          
+00001CF4  4EB8 1288               1355          jsr DrawBackgroundBitmap
+00001CF8                          1356          
+00001CF8  4E75                    1357          rts
+00001CFA                          1358  
+00001CFA                          1359  SetStateOne
+00001CFA  13FC 0003 00002030      1360          move.b          #BOSS_BULLET_COUNT_SHOT,(BossBulletsLeftToShoot)
+00001D02  2E38 13DC               1361          move.l          (OldTime),d7
+00001D06  23C7 00002032           1362          move.l          d7,(BossTimeToShoot)
+00001D0C                          1363                  
+00001D0C  13FC 0004 0000202B      1364          move.b          #4,(BossState)
+00001D14  4E75                    1365          rts
+00001D16                          1366  SetStateTwo
+00001D16                          1367  
+00001D16  41F9 00002636           1368          lea             PlayerPositionAndSize,a0
+00001D1C                          1369  
+00001D1C  2010                    1370          move.l          (a0),d0
+00001D1E  2228 0008               1371          move.l          8(a0),d1
+00001D22  E281                    1372          asr.l           #1,d1
+00001D24  D081                    1373          add.l           d1,d0
+00001D26  41F9 00002012           1374          lea             BossPositionAndSize,a0
+00001D2C  2210                    1375          move.l          (a0),d1
+00001D2E                          1376          
+00001D2E  1439 0000202A           1377          move.b          (BossShouldFaceRight),d2
+00001D34  6606                    1378          bne.b           SetStateTwoFaceRight
+00001D36                          1379  SetStateTwoFaceLeft
+00001D36  4EF9 00001D40           1380          jmp             SetStateTwoOffset
+00001D3C                          1381  SetStateTwoFaceRight
+00001D3C  D2A8 0008               1382          add.l           8(a0),d1
+00001D40                          1383  SetStateTwoOffset
+00001D40                          1384          
+00001D40  9280                    1385          sub.l           d0,d1
+00001D42  2001                    1386          move.l          d1,d0
+00001D44  E280                    1387          asr.l           #1,d0
+00001D46  D280                    1388          add.l           d0,d1
+00001D48  83FC FFD6               1389          divs            #-BOSS_TIME_TO_JUMP_AND_FALL,d1    
+00001D4C  E241                    1390          asr.w           #1,d1
+00001D4E  33C1 00002022           1391          move.w          d1,(BossVelocityX)
+00001D54                          1392        
+00001D54  33FC F800 00002024      1393          move.w          #-BOSS_VELOCITY_UP,(BossVelocityY)
+00001D5C                          1394  
+00001D5C  13FC 0008 0000202B      1395          move.b          #8,(BossState)
+00001D64                          1396          
+00001D64                          1397          ;jsr             UpdateStateTwo
+00001D64                          1398          
+00001D64  4E75                    1399          rts 
+00001D66                          1400  SetStateThree
+00001D66                          1401  
+00001D66  7000                    1402          moveq.l         #0,d0
+00001D68  1039 00002127           1403          move.b          (BossRainActive),d0
+00001D6E  6600 00BE               1404          bne             FinishSetStateThree 
+00001D72                          1405  
+00001D72  08F9 0000 00002127      1406          bset            #0,(BossRainActive)
+00001D7A  08F9 0001 00002127      1407          bset            #1,(BossRainActive)
+00001D82  08F9 0002 00002127      1408          bset            #2,(BossRainActive)
+00001D8A  08F9 0003 00002127      1409          bset            #3,(BossRainActive)
+00001D92                          1410  
+00001D92  203C 00004400           1411          move.l          #DROPPER_Y<<8+DROPPER_HEIGHT<<8,d0
+00001D98                          1412  
+00001D98  41F9 00002128           1413          lea             BossRainArray,a0
+00001D9E                          1414  
+00001D9E  20BC 00000092           1415          move.l          #DROPPER_ONE_X+DROPPER_WIDTH/2,(a0)
+00001DA4  217C 00000106 0012      1416          move.l          #DROPPER_TWO_X+DROPPER_WIDTH/2,18(a0)
+00001DAC  217C 0000017A 0024      1417          move.l          #DROPPER_THREE_X+DROPPER_WIDTH/2,36(a0)
+00001DB4  217C 000001EE 0036      1418          move.l          #DROPPER_FOUR_X+DROPPER_WIDTH/2,54(a0)   
+00001DBC                          1419  
+00001DBC  2140 0004               1420          move.l          d0,4(a0)
+00001DC0  2140 0016               1421          move.l          d0,22(a0)
+00001DC4  2140 0028               1422          move.l          d0,40(a0)
+00001DC8  2140 003A               1423          move.l          d0,58(a0)
+00001DCC                          1424          
+00001DCC  217C 00000020 0008      1425          move.l          #DROP_SIZE_INCREASE,8(a0)
+00001DD4  217C 00000020 001A      1426          move.l          #DROP_SIZE_INCREASE,26(a0)
+00001DDC  217C 00000020 002C      1427          move.l          #DROP_SIZE_INCREASE,44(a0)
+00001DE4  217C 00000020 003E      1428          move.l          #DROP_SIZE_INCREASE,62(a0)
+00001DEC  217C 00000020 000C      1429          move.l          #DROP_SIZE_INCREASE,12(a0)
+00001DF4  217C 00000020 001E      1430          move.l          #DROP_SIZE_INCREASE,30(a0)
+00001DFC  217C 00000020 0030      1431          move.l          #DROP_SIZE_INCREASE,48(a0)
+00001E04  217C 00000020 0042      1432          move.l          #DROP_SIZE_INCREASE,66(a0) 
+00001E0C                          1433  
+00001E0C  317C 0180 0010          1434          move.w          #INIITAL_DROP_SPEED,16(a0)
+00001E12  317C 0180 0022          1435          move.w          #INIITAL_DROP_SPEED,34(a0)
+00001E18  317C 0180 0034          1436          move.w          #INIITAL_DROP_SPEED,52(a0)
+00001E1E  317C 0180 0046          1437          move.w          #INIITAL_DROP_SPEED,70(a0)
+00001E24                          1438  
+00001E24  13FC 000C 0000202B      1439          move.b          #12,(BossState)
+00001E2C  4E75                    1440          rts
+00001E2E                          1441  FinishSetStateThree 
+00001E2E  13FC 0000 0000202B      1442          move.b          #0,(BossState)
+00001E36  4E75                    1443          rts
+00001E38                          1444  SetStateFour
+00001E38                          1445  
+00001E38  23FC 00000000 00002248  1446          move.l          #0,(BossLavaFillPercent)
+00001E42  23FC 00000180 0000224C  1447          move.l          #BOSS_LAVA_FILL_RATE,(BossLavaFillRate)
+00001E4C                          1448  
+00001E4C  13FC 0010 0000202B      1449          move.b          #16,(BossState)
+00001E54  4E75                    1450          rts
+00001E56                          1451  
+00001E56                          1452  UpdateStateOne
+00001E56                          1453  
+00001E56  41F9 00002030           1454          lea             BossBulletsLeftToShoot,a0
+00001E5C  7000                    1455          moveq.l         #0,d0
+00001E5E  1010                    1456          move.b          (a0),d0
+00001E60  6700 009C               1457          beq             FinsihedStateOne    
+00001E64                          1458      
+00001E64  2E38 13DC               1459          move.l          (OldTime),d7
+00001E68  2C39 00002032           1460          move.l          (BossTimeToShoot),d6
+00001E6E  BE86                    1461          cmp.l           d6,d7
+00001E70  6D00 008A               1462          blt             BossShootBulletDone
+00001E74                          1463      
+00001E74  5300                    1464          sub.b           #1,d0
+00001E76  1080                    1465          move.b          d0,(a0)
+00001E78                          1466      
+00001E78  7000                    1467          move.l          #0,d0
+00001E7A                          1468          
+00001E7A                          1469  FindOpenBossBulletLoop
+00001E7A  0139 00002031           1470          btst            d0,(BossBulletsActive)
+00001E80  6700 0010               1471          beq             BossBulletFound
+00001E84  5200                    1472          add.b           #1,d0
+00001E86  B03C 0006               1473          cmp.b           #BOSS_MAX_BULLETS,d0
+00001E8A  6E00 0072               1474          bgt             FinsihedStateOne
+00001E8E  4EF8 1E7A               1475          jmp             FindOpenBossBulletLoop
+00001E92                          1476  
+00001E92                          1477  BossBulletFound
+00001E92                          1478  
+00001E92  01F9 00002031           1479          bset            d0,(BossBulletsActive)
+00001E98                          1480  
+00001E98  C0FC 000A               1481          mulu            #BOSS_BULLET_DATA_SIZE_IN_BYTES,d0
+00001E9C  41F9 00002036           1482          lea             BossBulletArray,a0
+00001EA2  D1C0                    1483          add.l           d0,a0
+00001EA4                          1484          
+00001EA4  43F9 00002012           1485          lea             BossPositionAndSize,a1     
+00001EAA  1039 0000202A           1486          move.b          (BossShouldFaceRight),d0
+00001EB0  6600 001E               1487          bne             BossShootRight
+00001EB4                          1488  BossShootLeft
+00001EB4  2091                    1489          move.l          (a1),(a0)
+00001EB6  2429 0004               1490          move.l          4(a1),d2
+00001EBA  0682 00001900           1491          add.l           #BOSS_SHOT_HEIGHT_OFFSET<<8,d2
+00001EC0  2142 0004               1492          move.l          d2,4(a0)   
+00001EC4  317C FD00 0008          1493          move.w          #-BOSS_BULLET_SPEED,8(a0)
+00001ECA  4EF9 00001EEC           1494          jmp             BossShotDone
+00001ED0                          1495  BossShootRight
+00001ED0  2411                    1496          move.l          (a1),d2
+00001ED2  D4A9 0008               1497          add.l           8(a1),d2
+00001ED6  2082                    1498          move.l          d2,(a0)
+00001ED8  2429 0004               1499          move.l          4(a1),d2
+00001EDC  0682 00001900           1500          add.l           #BOSS_SHOT_HEIGHT_OFFSET<<8,d2
+00001EE2  2142 0004               1501          move.l          d2,4(a0)   
+00001EE6  317C 0300 0008          1502          move.w          #BOSS_BULLET_SPEED,8(a0)
+00001EEC                          1503  BossShotDone
+00001EEC  2038 13DC               1504          move.l          (OldTime),d0
+00001EF0  0680 00000032           1505          add.l           #BOSS_TIME_BETWEEN_SHOT,d0
+00001EF6  23C0 00002032           1506          move.l          d0,(BossTimeToShoot)
+00001EFC                          1507  BossShootBulletDone
+00001EFC  4E75                    1508          rts
+00001EFE                          1509          
+00001EFE                          1510  FinsihedStateOne    
+00001EFE  13FC 0000 0000202B      1511          move.b          #0,(BossState)
+00001F06  4E75                    1512          rts
+00001F08                          1513          
+00001F08                          1514  UpdateStateTwo
+00001F08  4DF9 00002012           1515          lea             BossPositionAndSize,a6
+00001F0E                          1516          
+00001F0E  2038 13D8               1517          move.l          (DeltaTime),d0
+00001F12  C1EE 0010               1518              muls            16(a6),d0
+00001F16  D096                    1519          add.l           (a6),d0
+00001F18  B0BC 00001E00           1520          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+00001F1E  6F00 0014               1521          ble             BossReachLeftSide
+00001F22  B0BC 00023A00           1522          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BOSS_WIDTH<<8,d0
+00001F28  6E00 0016               1523          bgt             BossReachRightSide
+00001F2C  2C80                    1524          move.l          d0,(a6)
+00001F2E  4EF9 00001F46           1525          jmp             FinishUpdatingBossX
+00001F34                          1526  BossReachLeftSide
+00001F34  2CBC 00001E00           1527          move.l          #LEFT_SIDE_OF_SCREEN<<8,(a6)
+00001F3A  4EF9 00001F46           1528          jmp             FinishUpdatingBossX
+00001F40                          1529  BossReachRightSide
+00001F40  2CBC 00023A00           1530          move.l          #RIGHT_SIDE_OF_SCREEN<<8-BOSS_WIDTH<<8,(a6)
+00001F46                          1531  FinishUpdatingBossX
+00001F46                          1532                 
+00001F46  2038 13D8               1533          move.l          (DeltaTime),d0
+00001F4A  C1EE 0012               1534              muls            18(a6),d0
+00001F4E  D0AE 0004               1535          add.l           4(a6),d0
+00001F52  B0BC 00016800           1536          cmp.l           #BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8,d0
+00001F58  6E00 0012               1537          bgt             BossReachBottomUpdate
+00001F5C  2D40 0004               1538          move.l          d0,4(a6)
+00001F60  23FC 00000000 00002026  1539          move.l          #0,(BossOnGround)
+00001F6A  4E75                    1540          rts
+00001F6C                          1541  BossReachBottomUpdate
+00001F6C  2D7C 00016800 0004      1542          move.l          #BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8,4(a6)
+00001F74  23FC 00000001 00002026  1543          move.l          #1,(BossOnGround)
+00001F7E  13FC 0000 0000202B      1544          move.b          #0,(BossState)
+00001F86  4E75                    1545              rts
+00001F88                          1546  
+00001F88                          1547  UpdateStateThree
+00001F88  41F9 00002128           1548          lea             BossRainArray,a0
+00001F8E  2028 0008               1549          move.l          8(a0),d0
+00001F92  B0BC 00000A00           1550          cmp.l           #DROP_SIZE,d0
+00001F98  6C00 0004               1551          bge             FinishStateThree
+00001F9C  4E75                    1552          rts
+00001F9E                          1553  FinishStateThree
+00001F9E  13FC 0000 0000202B      1554          move.b          #0,(BossState)
+00001FA6  4E75                    1555          rts
+00001FA8                          1556  UpdateStateFour
+00001FA8                          1557  
+00001FA8  2039 00002248           1558          move.l          (BossLavaFillPercent),d0
+00001FAE  2239 0000224C           1559          move.l          (BossLavaFillRate),d1
+00001FB4  2438 13D8               1560          move.l          (DeltaTime),d2
+00001FB8  C3C2                    1561          muls            d2,d1
+00001FBA  6B00 0008               1562          bmi             FillRateIsNegative        
+00001FBE  4EF9 00001FE0           1563          jmp             FillRateIsPositive
+00001FC4                          1564  FillRateIsNegative
+00001FC4                          1565  
+00001FC4  2E00                    1566          move.l          d0,d7
+00001FC6                          1567  
+00001FC6  D081                    1568          add.l           d1,d0
+00001FC8  23C0 00002248           1569          move.l          d0,(BossLavaFillPercent)
+00001FCE                          1570          
+00001FCE  2C00                    1571          move.l          d0,d6
+00001FD0                          1572                 
+00001FD0  2039 00002248           1573          move.l          (BossLavaFillPercent),d0
+00001FD6  6B00 0026               1574          bmi             StateFourEnded
+00001FDA                          1575  
+00001FDA  4EB8 14E0               1576          jsr             EraseLava
+00001FDE                          1577  
+00001FDE  4E75                    1578          rts        
+00001FE0                          1579  
+00001FE0                          1580  FillRateIsPositive
+00001FE0                          1581          
+00001FE0  D081                    1582          add.l           d1,d0
+00001FE2  23C0 00002248           1583          move.l          d0,(BossLavaFillPercent)
+00001FE8                          1584          
+00001FE8  B0BC 00006E00           1585          cmp.l           #110<<8,d0
+00001FEE  6D00 000C               1586          blt             DontSwapSign
+00001FF2  23FC FFFFFE80 0000224C  1587          move.l          #-BOSS_LAVA_FILL_RATE,(BossLavaFillRate)
+00001FFC                          1588  DontSwapSign
+00001FFC  4E75                    1589          rts
+00001FFE                          1590  
+00001FFE                          1591  StateFourEnded
+00001FFE  23FC 00000180 0000224C  1592          move.l          #BOSS_LAVA_FILL_RATE,(BossLavaFillRate)
+00002008  13FC 0000 0000202B      1593          move.b          #0,(BossState)
+00002010  4E75                    1594          rts
+00002012                          1595                
+00002012                          1596          
+00002012= 00019000 00016700 ...   1597  BossPositionAndSize         dc.l BOSS_START_X<<8,BOTTOM_SIDE_OF_SCREEN<<8-BOSS_HEIGHT<<8-1<<8,BOSS_WIDTH<<8,BOSS_HEIGHT<<8
+00002022= 0000                    1598  BossVelocityX               dc.w 0
+00002024= 0000                    1599  BossVelocityY               dc.w 0
+00002026= 00000000                1600  BossOnGround                dc.l 0
+0000202A= 00                      1601  BossShouldFaceRight         dc.b 0
+0000202B= 08                      1602  BossState                   dc.b 8                        ;State 0 waiting for update, State 4 shooting, State 8 Jumping, State 12 Dropping, State 16 Flooding
+0000202C= 00FFFFFF                1603  BossColor                   dc.l $00FFFFFF
+00002030                          1604  
+00002030= 03                      1605  BossBulletsLeftToShoot      dc.b BOSS_BULLET_COUNT_SHOT
+00002031= 00                      1606  BossBulletsActive           dc.b 0
+00002032= 00000000                1607  BossTimeToShoot             dc.l 0
+00002036                          1608  BossBulletArray             ds.l BOSS_MAX_BULLETS*BOSS_BULLET_DATA_SIZE_IN_BYTES
+00002126                          1609  
+00002126= 04                      1610  BossRainLeftToShoot         dc.b BOSS_MAX_RAIN
+00002127= 00                      1611  BossRainActive              dc.b 0
+00002128                          1612  BossRainArray               ds.l BOSS_MAX_RAIN*BOSS_RAIN_DATA_SIZE_IN_BYTES ; center of where to draw, width,height, y velocity
+00002248                          1613  
+00002248= 00000000                1614  BossLavaFillPercent         dc.l 0
+0000224C= 00000180                1615  BossLavaFillRate            dc.l BOSS_LAVA_FILL_RATE
+00002250                          1616  
+00002250= 00000000                1617  BossTimeStateStart          dc.l 0
+00002254                          1618  
+00002254= 00001CFA 00001D16 ...   1619  SetStateTable               dc.l SetStateOne, SetStateTwo, SetStateThree, SetStateFour
+00002264= 00001E56 00001F08 ...   1620  UpdateStateTable            dc.l UpdateStateOne, UpdateStateTwo, UpdateStateThree, UpdateStateFour
+00002274                          1621  
+00002274                          1622  
+00002274                          1623  
+00002274                          1624  
+00002274                          1625  
+00002274                          1626  
+00002274                          1627  
+00002274                          1628  
+00002274                          1629  
+00002274                          1630  
+00002274                          1631  
+00002274                          1632  
+00002274                          1633  
+00002274                          1634  
+00002274                          1635  
+00002274                          1636  
+00002274                          1637  
+00002274                          1638  -------------------- end include --------------------
+00002274                          1639          INCLUDE "BossBullets.x68"
+00002274                          1640  
+00002274                          1641  UpdateBossBullets
+00002274                          1642          
+00002274  7000                    1643          move.l          #0,d0
+00002276                          1644          
+00002276                          1645  FindActiveBossBulletLoop
+00002276  0138 2031               1646          btst            d0,(BossBulletsActive)
+0000227A  6600 0010               1647          bne             ActiveBulletsFound
+0000227E  5200                    1648          add.b           #1,d0
+00002280  B03C 0006               1649          cmp.b           #BOSS_MAX_BULLETS,d0
+00002284  6E00 001A               1650          bgt             AllBossBulletsUpdated
+00002288  4EF8 2276               1651          jmp             FindActiveBossBulletLoop
+0000228C                          1652  
+0000228C                          1653  ActiveBulletsFound
+0000228C                          1654  
+0000228C  4EB9 000022A2           1655          jsr             UpdateSpecificBossBullet
+00002292                          1656  
+00002292  5200                    1657          add.b           #1,d0
+00002294  B03C 0006               1658          cmp.b           #BOSS_MAX_BULLETS,d0
+00002298  6E00 0006               1659          bgt             AllBossBulletsUpdated
+0000229C  4EF8 2276               1660          jmp             FindActiveBossBulletLoop
+000022A0                          1661  
+000022A0                          1662  AllBossBulletsUpdated
+000022A0                          1663              
+000022A0  4E75                    1664          rts
+000022A2                          1665          
+000022A2                          1666  UpdateSpecificBossBullet
+000022A2                          1667  
+000022A2  2200                    1668          move.l          d0,d1
+000022A4  41F8 2036               1669          lea             BossBulletArray,a0
+000022A8  C2FC 000A               1670          mulu            #BOSS_BULLET_DATA_SIZE_IN_BYTES,d1
+000022AC  D1C1                    1671          add.l           d1,a0
+000022AE                          1672          
+000022AE  2E38 13D8               1673          move.l          (DeltaTime),d7
+000022B2  3228 0008               1674          move.w          8(a0),d1
+000022B6  C3C7                    1675          muls            d7,d1
+000022B8  D290                    1676          add.l           (a0),d1
+000022BA  B2BC 00001E00           1677          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d1
+000022C0  6D00 0010               1678          blt             DeleteBossBullet
+000022C4  B2BC 00025800           1679          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BOSS_BULLET_WIDTH<<8,d1
+000022CA  6E00 0006               1680          bgt             DeleteBossBullet
+000022CE  2081                    1681          move.l          d1,(a0)        
+000022D0  4E75                    1682          rts
+000022D2                          1683  DeleteBossBullet        
+000022D2  01B8 2031               1684          bclr            d0,(BossBulletsActive)
+000022D6  4E75                    1685          rts
+000022D8                          1686  
+000022D8                          1687          
+000022D8                          1688  DrawBossBullets
+000022D8                          1689  
+000022D8  7C00                    1690          move.l          #0,d6
+000022DA  4DF8 2036               1691          lea             BossBulletArray,a6
+000022DE                          1692          
+000022DE                          1693  DrawActiveBossBulletLoop
+000022DE  0D38 2031               1694          btst            d6,(BossBulletsActive)
+000022E2  6600 0016               1695          bne             DrawActiveBossBulletFound   
+000022E6  5206                    1696          add.b           #1,d6
+000022E8  DDFC 0000000A           1697          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+000022EE  BC3C 0006               1698          cmp.b           #BOSS_MAX_BULLETS,d6
+000022F2  6E00 0020               1699          bgt             AllBossBulletDrawn
+000022F6  4EF8 22DE               1700          jmp             DrawActiveBossBulletLoop
+000022FA                          1701  
+000022FA                          1702  DrawActiveBossBulletFound   
+000022FA                          1703              
+000022FA  4EB9 00002316           1704          jsr             DrawSpecificBossBulletAtA6
+00002300  5206                    1705          add.b           #1,d6
+00002302  DDFC 0000000A           1706          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00002308  BC3C 0006               1707          cmp.b           #BOSS_MAX_BULLETS,d6
+0000230C  6E00 0006               1708          bgt             AllBossBulletDrawn
+00002310  4EF8 22DE               1709          jmp             DrawActiveBossBulletLoop
+00002314                          1710          
+00002314                          1711  AllBossBulletDrawn
+00002314                          1712              
+00002314  4E75                    1713          rts
+00002316                          1714          
+00002316                          1715  DrawSpecificBossBulletAtA6
+00002316                          1716  
+00002316  223C 00FFFFFF           1717          move.l          #BULLET_COLOR,d1
+0000231C  103C 0050               1718              move.b              #SET_PEN_COLOR_COMMAND,d0
+00002320  4E4F                    1719              trap                #15
+00002322  103C 0051               1720              move.b              #SET_FILL_COLOR_COMMAND,d0
+00002326  4E4F                    1721              trap                #15
+00002328  103C 0058               1722              move.b              #DRAW_CIRCLE_COMMAND,d0
+0000232C                          1723  
+0000232C  2216                    1724          move.l          (a6),d1
+0000232E  E089                    1725              lsr.l           #8,d1
+00002330  242E 0004               1726              move.l          4(a6),d2
+00002334  E08A                    1727          lsr.l           #8,d2
+00002336  2601                    1728          move.l          d1,d3
+00002338  0683 0000000A           1729          add.l           #BOSS_BULLET_WIDTH,d3
+0000233E  2802                    1730              move.l          d2,d4
+00002340  0684 0000000A           1731          add.l           #BOSS_BULLET_HEIGHT,d4  
+00002346  4E4F                    1732          trap            #15
+00002348                          1733          
+00002348  4E75                    1734          rts
+0000234A                          1735          
+0000234A                          1736  EraseBossBullets        
+0000234A                          1737      
+0000234A  7C00                    1738          move.l          #0,d6
+0000234C  4DF8 2036               1739          lea             BossBulletArray,a6
+00002350                          1740          
+00002350                          1741  EraseActiveBossBulletLoop
+00002350  0D38 2031               1742          btst            d6,(BossBulletsActive)
+00002354  6600 0014               1743          bne             EraseActiveBossBulletFound
+00002358  5206                    1744          add.b           #1,d6
+0000235A  DDFC 0000000A           1745          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00002360  BC3C 0006               1746          cmp.b           #BOSS_MAX_BULLETS,d6
+00002364  6EAE                    1747          bgt             AllBossBulletDrawn
+00002366  4EF8 2350               1748          jmp             EraseActiveBossBulletLoop
+0000236A                          1749  
+0000236A                          1750  EraseActiveBossBulletFound   
+0000236A                          1751           
+0000236A  2F0E                    1752          move.l          a6,-(sp) 
+0000236C  2F06                    1753          move.l          d6,-(sp)  
+0000236E  4EB9 0000238C           1754          jsr             ErasedSpecificBossBulletAtA6
+00002374  2C1F                    1755          move.l          (sp)+,d6
+00002376  2C5F                    1756          move.l          (sp)+,a6
+00002378                          1757          
+00002378  5206                    1758          add.b           #1,d6
+0000237A  DDFC 0000000A           1759          add.l           #BOSS_BULLET_DATA_SIZE_IN_BYTES,a6
+00002380  BC3C 0006               1760          cmp.b           #BOSS_MAX_BULLETS,d6
+00002384  6E8E                    1761          bgt             AllBossBulletDrawn
+00002386  4EF8 2350               1762          jmp             EraseActiveBossBulletLoop
+0000238A                          1763          
+0000238A                          1764  AllBossBulletErased
+0000238A                          1765              
+0000238A  4E75                    1766          rts
+0000238C                          1767          
+0000238C                          1768  ErasedSpecificBossBulletAtA6
+0000238C  2016                    1769          move.l          (a6),d0
+0000238E  E088                    1770          lsr.l           #8,d0
+00002390  5380                    1771          sub.l           #1,d0
+00002392  222E 0004               1772          move.l          4(a6),d1
+00002396  E089                    1773          lsr.l           #8,d1
+00002398  0481 FFFFFFFF           1774          sub.l           #-1,d1
+0000239E                          1775  
+0000239E  41F9 00002F20           1776          lea.l           Bitmap, a0
+000023A4  2000                    1777          move.l          d0,d0
+000023A6  2201                    1778          move.l          d1,d1
+000023A8  243C 0000000C           1779          move.l          #BULLET_DRAW_SIZE_WIDTH,d2
+000023AE  263C 0000000A           1780          move.l          #BULLET_SIZE_HEIGHT,d3
+000023B4  2800                    1781          move.l          d0,d4
+000023B6  2A01                    1782          move.l          d1,d5
+000023B8                          1783          
+000023B8  4EB8 1288               1784          jsr             DrawBackgroundBitmap
+000023BC                          1785          
+000023BC  4E75                    1786          rts
+000023BE                          1787  
+000023BE                          1788  
+000023BE                          1789  
+000023BE                          1790  
+000023BE                          1791  -------------------- end include --------------------
+000023BE                          1792          INCLUDE "PlayerController.x68"
+000023BE  =00000064               1793  PLAYER_START_X                  EQU 100
+000023BE  =0000012C               1794  PLAYER_START_Y                  EQU 300
+000023BE  =00000014               1795  PLAYER_WIDTH                    EQU 20
+000023BE  =00000014               1796  PLAYER_HEIGHT                   EQU 20
+000023BE                          1797  
+000023BE  =00000200               1798  PLAYER_VELOCITY                     EQU $200
+000023BE  =00000680               1799  PLAYER_VELOCITY_UP                      EQU     $680
+000023BE  =00000040               1800  GRAVITY_SIZE                    EQU $40
+000023BE                          1801  
+000023BE  =00000013               1802  GET_KEY_INPUT_TRAP_CODE         EQU 19
+000023BE  =26252827               1803  GET_KEY_INPUT_D1_ULDR           EQU $26252827
+000023BE  =00000020               1804  GET_KEY_INPUT_D1____Sp          EQU $00000020
+000023BE                          1805  
+000023BE                          1806  UpdatePlayer       
+000023BE  4DF9 00002636           1807          lea             PlayerPositionAndSize,a6
+000023C4                          1808  
+000023C4  7013                    1809          move.l          #GET_KEY_INPUT_TRAP_CODE,d0
+000023C6  223C 26252827           1810          move.l          #GET_KEY_INPUT_D1_ULDR,d1
+000023CC  4E4F                    1811          trap            #15
+000023CE  23C1 0000265E           1812          move.l          d1,(PlayerInput)
+000023D4                          1813  RightInput        
+000023D4  1201                    1814          move.b          d1,d1
+000023D6  6700 0012               1815          beq             LeftInput
+000023DA  3D7C 0200 0010          1816          move.w          #PLAYER_VELOCITY,16(a6)
+000023E0  23FC 00000001 0000264E  1817          move.l          #1,(PlayerLookingRight)
+000023EA                          1818  LeftInput
+000023EA  4841                    1819          swap            d1
+000023EC  1201                    1820          move.b          d1,d1
+000023EE  6700 0012               1821          beq             UpInput
+000023F2  3D7C FE00 0010          1822          move.w          #-PLAYER_VELOCITY,16(a6)
+000023F8  23FC 00000000 0000264E  1823          move.l          #0,(PlayerLookingRight)
+00002402                          1824  UpInput
+00002402  E089                    1825          lsr.l           #8,d1
+00002404  1201                    1826          move.b          d1,d1
+00002406  6700 004C               1827          beq             Undebounce
+0000240A  2039 00002662           1828          move.l          (PlayerShouldJump),d0
+00002410  6600 004C               1829          bne             DownInput
+00002414  23FC 00000001 00002662  1830          move.l          #1,(PlayerShouldJump)
+0000241E  41F9 00002652           1831          lea             PlayerJumpCounter,a0
+00002424  1028 0003               1832          move.b          3(a0),d0
+00002428  6700 0034               1833          beq             DownInput
+0000242C  43F9 00002656           1834          lea             DebounceUpTime,a1
+00002432  2438 13DC               1835          move.l          (OldTime),d2
+00002436  B491                    1836          cmp.l           (a1),d2
+00002438  6D00 0024               1837          blt             DownInput
+0000243C  2238 13DC               1838          move.l          (OldTime),d1
+00002440  0681 0000000A           1839          add.l           #DEBOUNCE_TIME,d1
+00002446  2281                    1840          move.l          d1,(a1)
+00002448  3D7C F980 0012          1841          move.w          #-PLAYER_VELOCITY_UP,18(a6)
+0000244E  5300                    1842          sub.b           #1,d0
+00002450  1140 0003               1843          move.b          d0,3(a0)
+00002454                          1844  Undebounce        
+00002454  23FC 00000000 00002662  1845          move.l          #0,PlayerShouldJump
+0000245E                          1846  DownInput  
+0000245E  4841                    1847          swap            d1
+00002460  1201                    1848          move.b          d1,d1
+00002462  6700 0002               1849          beq             MoveInputDone
+00002466                          1850          
+00002466                          1851  MoveInputDone
+00002466                          1852  
+00002466  4EB9 000024A0           1853          jsr             UpdatePlayerInfo        
+0000246C                          1854          
+0000246C  3D7C 0000 0010          1855          move.w          #0,16(a6)           ; After updating player set players X speed to 0
+00002472                          1856          
+00002472  2039 0000264A           1857          move.l          (PlayerOnGround),d0
+00002478  6600 0010               1858          bne             PlayerReachFloor
+0000247C  2038 13D8               1859          move.l          (DeltaTime),d0
+00002480  C1FC 0040               1860          muls            #GRAVITY_SIZE,d0
+00002484  D16E 0012               1861          add.w           d0,18(a6)
+00002488  4E75                    1862          rts
+0000248A                          1863  PlayerReachFloor
+0000248A  2D7C 00000000 0012      1864          move.l          #0,18(a6)
+00002492  41F9 00002652           1865          lea             PlayerJumpCounter,a0
+00002498  117C 0002 0003          1866          move.b          #2,3(a0)
+0000249E  4E75                    1867          rts
+000024A0                          1868          
+000024A0                          1869  UpdatePlayerInfo:
+000024A0  2038 13D8               1870          move.l          (DeltaTime),d0
+000024A4  C1EE 0010               1871              muls            16(a6),d0
+000024A8  D096                    1872          add.l           (a6),d0
+000024AA  B0BC 00001E00           1873          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+000024B0  6F00 0014               1874          ble             PlayerReachLeftSide
+000024B4  B0BC 00024E00           1875          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-PLAYER_WIDTH<<8,d0
+000024BA  6E00 0016               1876          bgt             PlayerReachRightSide
+000024BE  2C80                    1877          move.l          d0,(a6)
+000024C0  4EF9 000024D8           1878          jmp             FinishUpdatingPlayerX
+000024C6                          1879  PlayerReachLeftSide
+000024C6  2CBC 00001E00           1880          move.l          #LEFT_SIDE_OF_SCREEN<<8,(a6)
+000024CC  4EF9 000024D8           1881          jmp             FinishUpdatingPlayerX
+000024D2                          1882  PlayerReachRightSide
+000024D2  2CBC 00024E00           1883          move.l          #RIGHT_SIDE_OF_SCREEN<<8-PLAYER_WIDTH<<8,(a6)
+000024D8                          1884  FinishUpdatingPlayerX
+000024D8                          1885                 
+000024D8  2038 13D8               1886          move.l          (DeltaTime),d0
+000024DC  C1EE 0012               1887              muls            18(a6),d0
+000024E0  D0AE 0004               1888          add.l           4(a6),d0
+000024E4  B0BC 00017C00           1889          cmp.l           #BOTTOM_SIDE_OF_SCREEN<<8-PLAYER_HEIGHT<<8,d0
+000024EA  6E00 0050               1890          bgt             PlayerReachBottomUpdate
+000024EE                          1891          
+000024EE  2239 0000265E           1892          move.l          (PlayerInput),d1
+000024F4  E089                    1893          lsr.l           #8,d1
+000024F6  1201                    1894          move.b          d1,d1
+000024F8  6600 0032               1895          bne             PlayerNotMovingDown
+000024FC                          1896   
+000024FC  41F9 00002646           1897          lea             PlayerMovement,a0
+00002502  7200                    1898          moveq.l         #0,d1
+00002504  3228 0002               1899          move.w          2(a0),d1
+00002508  6B00 0022               1900          bmi             PlayerNotMovingDown
+0000250C                          1901      
+0000250C  223C 00000110           1902          move.l          #PLATFORM_Y-PLAYER_HEIGHT-8,d1
+00002512  2400                    1903          move.l          d0,d2
+00002514  E08A                    1904          lsr.l           #8,d2
+00002516  B481                    1905          cmp.l           d1,d2
+00002518  6D00 0012               1906          blt             PlayerNotMovingDown     
+0000251C                          1907         
+0000251C  223C 00000119           1908          move.l          #PLATFORM_Y-PLAYER_HEIGHT+1,d1
+00002522  2400                    1909          move.l          d0,d2
+00002524  E08A                    1910          lsr.l           #8,d2
+00002526  B481                    1911          cmp.l           d1,d2
+00002528  6D00 0026               1912          blt             PlayerAtPlatformHeight
+0000252C                          1913          
+0000252C                          1914  PlayerNotMovingDown     
+0000252C                          1915     
+0000252C  2D40 0004               1916          move.l          d0,4(a6)
+00002530  23FC 00000000 0000264A  1917          move.l          #0,(PlayerOnGround)
+0000253A  4E75                    1918          rts
+0000253C                          1919  PlayerReachBottomUpdate
+0000253C  2D7C 00017C00 0004      1920          move.l          #BOTTOM_SIDE_OF_SCREEN<<8-PLAYER_HEIGHT<<8,4(a6)
+00002544  23FC 00000001 0000264A  1921          move.l          #1,(PlayerOnGround)
+0000254E  4E75                    1922              rts
+00002550                          1923  
+00002550                          1924  PlayerAtPlatformHeight
+00002550                          1925  
+00002550  2216                    1926          move.l          (a6),d1
+00002552  B2BC 0000B400           1927          cmp.l           #LEFT_PLATFORM_LEFT_X<<8-PLAYER_WIDTH<<8,d1
+00002558  6D00 003A               1928          blt             PlayerNotOnPlatform
+0000255C  B2BC 0000F600           1929          cmp.l           #LEFT_PLATFORM_LEFT_X<<8+PLATFORM_WIDTH<<8,d1
+00002562  6D00 001C               1930          blt             PlayerOnPlatform
+00002566                          1931          
+00002566  B2BC 00017600           1932          cmp.l           #RIGHT_PLATFORM_LEFT_X<<8-PLAYER_WIDTH<<8,d1
+0000256C  6D00 0026               1933          blt             PlayerNotOnPlatform
+00002570  B2BC 0001B800           1934          cmp.l           #RIGHT_PLATFORM_LEFT_X<<8+PLATFORM_WIDTH<<8,d1
+00002576  6D00 0008               1935          blt             PlayerOnPlatform
+0000257A  4EF9 00002594           1936          jmp             PlayerNotOnPlatform
+00002580                          1937          
+00002580                          1938  PlayerOnPlatform
+00002580                          1939  
+00002580  2D7C 00011800 0004      1940          move.l          #PLATFORM_Y<<8-PLAYER_HEIGHT<<8,4(a6)
+00002588  23FC 00000001 0000264A  1941          move.l          #1,(PlayerOnGround)
+00002592                          1942  
+00002592  4E75                    1943          rts
+00002594                          1944          
+00002594                          1945  PlayerNotOnPlatform
+00002594                          1946  
+00002594  2D40 0004               1947          move.l          d0,4(a6)
+00002598  23FC 00000000 0000264A  1948          move.l          #0,(PlayerOnGround)
+000025A2                          1949  
+000025A2  4E75                    1950          rts         
+000025A4                          1951              
+000025A4                          1952              
+000025A4                          1953  DrawPlayer
+000025A4  4DF9 00002636           1954          lea             PlayerPositionAndSize,a6
+000025AA                          1955          
+000025AA  2038 13DC               1956          move.l          (OldTime),d0
+000025AE                          1957  
+000025AE  B0B8 1B6E               1958          cmp.l           (PlayerVulnerabilityTime),d0
+000025B2  6D00 0012               1959          blt             DrawInVulnerablePlayer
+000025B6                          1960  
+000025B6  223C 00FFFFFF           1961          move.l          #WHITE,d1
+000025BC  7050                    1962              move.l          #SET_PEN_COLOR_COMMAND,d0
+000025BE  4E4F                    1963          trap            #15
+000025C0  4EF9 000025D0           1964          jmp             ChangeInVulnerableColor
+000025C6                          1965  
+000025C6                          1966  DrawInVulnerablePlayer
+000025C6                          1967  
+000025C6  223C 0000FFFF           1968          move.l          #YELLOW,d1
+000025CC  7050                    1969              move.l          #SET_PEN_COLOR_COMMAND,d0
+000025CE  4E4F                    1970          trap            #15
+000025D0                          1971  
+000025D0                          1972  ChangeInVulnerableColor     
+000025D0                          1973          
+000025D0  2239 0000265A           1974              move.l              (PlayerColor),d1
+000025D6  7051                    1975              move.l          #SET_FILL_COLOR_COMMAND,d0
+000025D8  4E4F                    1976              trap                #15
+000025DA                          1977  
+000025DA  103C 0058               1978              move.b              #DRAW_CIRCLE_COMMAND,d0
+000025DE  2216                    1979              move.l          (a6),d1
+000025E0  E089                    1980              lsr.l           #8,d1
+000025E2  242E 0004               1981              move.l          4(a6),d2
+000025E6  E08A                    1982              lsr.l           #8,d2
+000025E8  262E 0008               1983              move.l          8(a6),d3
+000025EC  D696                    1984              add.l           (a6),d3
+000025EE  E08B                    1985              lsr.l           #8,d3
+000025F0  282E 000C               1986              move.l          12(a6),d4
+000025F4  D8AE 0004               1987              add.l           4(a6),d4
+000025F8  E08C                    1988              lsr.l           #8,d4       
+000025FA  4E4F                    1989              trap                #15
+000025FC                          1990  
+000025FC  4E75                    1991              rts
+000025FE                          1992          
+000025FE                          1993  ErasePlayer: ;a6 memory location of x,y,w,h,v_x,v_y
+000025FE                          1994         
+000025FE  4DF9 00002636           1995          lea             PlayerPositionAndSize,a6
+00002604  2016                    1996          move.l          (a6),d0
+00002606  E088                    1997          lsr.l           #8,d0
+00002608  5380                    1998          sub.l           #1,d0
+0000260A  222E 0004               1999          move.l          4(a6),d1
+0000260E  E089                    2000          lsr.l           #8,d1
+00002610  0481 FFFFFFFF           2001          sub.l           #-1,d1
+00002616  242E 0008               2002          move.l          8(a6),d2
+0000261A  E08A                    2003          lsr.l           #8,d2
+0000261C  41F9 00002F20           2004          lea.l           Bitmap, a0
+00002622  2000                    2005          move.l          d0,d0
+00002624  2201                    2006          move.l          d1,d1
+00002626  2602                    2007          move.l          d2,d3
+00002628  5482                    2008          add.l           #2,d2
+0000262A  2402                    2009          move.l          d2,d2
+0000262C  2800                    2010          move.l          d0,d4
+0000262E  2A01                    2011          move.l          d1,d5
+00002630                          2012          
+00002630  4EB8 1288               2013          jsr DrawBackgroundBitmap
+00002634                          2014          
+00002634  4E75                    2015          rts
+00002636                          2016          
+00002636= 00006400 00012C00 ...   2017  PlayerPositionAndSize       dc.l PLAYER_START_X<<8,PLAYER_START_Y<<8,PLAYER_WIDTH<<8,PLAYER_HEIGHT<<8
+00002646= 0000 0000               2018  PlayerMovement              dc.w 0,0
+0000264A= 00000000                2019  PlayerOnGround              dc.l 0
+0000264E= 00000001                2020  PlayerLookingRight          dc.l 1
+00002652= 00000002                2021  PlayerJumpCounter           dc.l 2
+00002656= 00000000                2022  DebounceUpTime              dc.l 0
+0000265A= 00FFFFFF                2023  PlayerColor                 dc.l WHITE
+0000265E= 00000000                2024  PlayerInput                 dc.l 0
+00002662= 00000000                2025  PlayerShouldJump            dc.l 0
+00002666                          2026  
+00002666                          2027  
+00002666                          2028  
+00002666                          2029  
+00002666                          2030  
+00002666                          2031  
+00002666                          2032  
+00002666                          2033  
+00002666                          2034  
+00002666                          2035  
+00002666                          2036  
+00002666                          2037  
+00002666                          2038  
+00002666                          2039  
+00002666                          2040  -------------------- end include --------------------
+00002666                          2041          INCLUDE "Bullets.x68"
+00002666                          2042  
+00002666  =0000000A               2043  BULLET_SIZE_WIDTH               EQU 10
+00002666  =0000000A               2044  BULLET_SIZE_HEIGHT              EQU 10
+00002666  =00000300               2045  BULLET_SPEED                    EQU $300
+00002666                          2046  
+00002666  =0000000C               2047  BULLET_DRAW_SIZE_WIDTH          EQU 12
+00002666  =00000003               2048  MAX_ALLOWED_BULLETS             EQU 3
+00002666  =00000007               2049  FULL_ACTIVE_BULLETS             EQU $7
+00002666                          2050  
+00002666  =00FFFFFF               2051  BULLET_COLOR                    EQU $00FFFFFF
+00002666                          2052  
+00002666                          2053  UpdateBullets:
+00002666  7013                    2054          move.l          #GET_KEY_INPUT_TRAP_CODE,d0
+00002668  7220                    2055          move.l          #GET_KEY_INPUT_D1____Sp,d1
+0000266A  4E4F                    2056          trap            #15
+0000266C                          2057  OneButtonsPressed               
+0000266C  1201                    2058          move.b          d1,d1
+0000266E  6700 0024               2059          beq             OtherInputDone
+00002672                          2060          
+00002672  43F9 00002954           2061          lea             DebounceOneTime,a1
+00002678  2438 13DC               2062          move.l          (OldTime),d2
+0000267C  B491                    2063          cmp.l           (a1),d2
+0000267E  6D00 0014               2064          blt             OtherInputDone
+00002682  2238 13DC               2065          move.l          (OldTime),d1
+00002686  0681 0000000A           2066          add.l           #DEBOUNCE_TIME,d1
+0000268C  2281                    2067          move.l          d1,(a1)
+0000268E  4EB9 0000269C           2068          jsr             CreateBullets
+00002694                          2069  OtherInputDone
+00002694                          2070  
+00002694  4EB9 00002748           2071          jsr             UpdateBulletsPositions
+0000269A                          2072          
+0000269A  4E75                    2073          rts
+0000269C                          2074          
+0000269C                          2075  CreateBullets:
+0000269C  1039 00002935           2076          move.b          (ActiveBullets),d0
+000026A2                          2077          ;cmp.b           #FULL_ACTIVE_BULLETS,d0
+000026A2                          2078          ;beq             BulletsFull
+000026A2                          2079  CreateFirstBullet        
+000026A2  0839 0000 00002935      2080          btst            #0,(ActiveBullets)
+000026AA  6600 001E               2081          bne             CreateSecondBullet
+000026AE                          2082          
+000026AE  4DF9 00002936           2083          lea             BulletOnePosition,a6
+000026B4  08F9 0000 00002935      2084          bset            #0,(ActiveBullets)
+000026BC  2438 264E               2085          move.l          (PlayerLookingRight),d2
+000026C0  6700 0058               2086          beq             BulletSetNegativeSpeed
+000026C4  4EF9 0000272E           2087          jmp             BulletSetPositiveSpeed
+000026CA                          2088  CreateSecondBullet
+000026CA  0839 0001 00002935      2089          btst            #1,(ActiveBullets)
+000026D2  6600 001E               2090          bne             CreateThirdBullet
+000026D6                          2091          
+000026D6  4DF9 00002940           2092          lea             BulletTwoPosition,a6
+000026DC  08F9 0001 00002935      2093          bset            #1,(ActiveBullets)
+000026E4  2438 264E               2094          move.l          (PlayerLookingRight),d2
+000026E8  6700 0030               2095          beq             BulletSetNegativeSpeed
+000026EC  4EF9 0000272E           2096          jmp             BulletSetPositiveSpeed
+000026F2                          2097          
+000026F2                          2098  CreateThirdBullet
+000026F2  0839 0002 00002935      2099          btst            #2,(ActiveBullets)
+000026FA  6600 004A               2100          bne             BulletsFull
+000026FE                          2101          
+000026FE  4DF9 0000294A           2102          lea             BulletThreePosition,a6
+00002704  08F9 0002 00002935      2103          bset            #2,(ActiveBullets)
+0000270C  2438 264E               2104          move.l          (PlayerLookingRight),d2
+00002710  6700 0008               2105          beq             BulletSetNegativeSpeed
+00002714  4EF9 0000272E           2106          jmp             BulletSetPositiveSpeed
+0000271A                          2107          
+0000271A                          2108  BulletSetNegativeSpeed
+0000271A  3D7C FD00 0008          2109          move.w          #-BULLET_SPEED,8(a6)
+00002720  4BF8 2636               2110          lea             PlayerPositionAndSize,a5
+00002724  2C95                    2111          move.l          (a5),(a6)
+00002726  2D6D 0004 0004          2112          move.l          4(a5),4(a6)
+0000272C  4E75                    2113          rts
+0000272E                          2114  BulletSetPositiveSpeed
+0000272E  3D7C 0300 0008          2115          move.w          #BULLET_SPEED,8(a6)
+00002734  4BF8 2636               2116          lea             PlayerPositionAndSize,a5
+00002738  2415                    2117          move.l          (a5),d2
+0000273A  D4AD 0008               2118          add.l           8(a5),d2
+0000273E  2C82                    2119          move.l          d2,(a6)
+00002740  2D6D 0004 0004          2120          move.l          4(a5),4(a6)
+00002746                          2121  BulletsFull
+00002746  4E75                    2122          rts
+00002748                          2123  
+00002748                          2124  UpdateBulletsPositions:
+00002748  2238 13D8               2125          move.l          (DeltaTime),d1
+0000274C  7400                    2126          moveq.l         #0,d2
+0000274E  1439 00002935           2127          move.b          (ActiveBullets),d2
+00002754                          2128          
+00002754  6700 00DE               2129          beq             UpdateBulletEnd
+00002758                          2130          
+00002758                          2131  UpdateBulletOne 
+00002758  0839 0000 00002935      2132          btst            #0,(ActiveBullets)
+00002760  6700 003E               2133          beq             UpdateBulletTwo
+00002764                          2134           
+00002764  7000                    2135          moveq.l         #0,d0
+00002766  41F9 00002936           2136          lea             BulletOnePosition,a0
+0000276C  3028 0008               2137          move.w          8(a0),d0
+00002770  C1C1                    2138          muls            d1,d0
+00002772  D090                    2139          add.l           (a0),d0
+00002774  2080                    2140          move.l          d0,(a0)
+00002776  B0BC 00001E00           2141          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+0000277C  6D00 0014               2142          blt             DestoryOneBullet
+00002780  B0BC 00025800           2143          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BULLET_SIZE_WIDTH<<8,d0
+00002786  6E00 000A               2144          bgt             DestoryOneBullet
+0000278A  2080                    2145          move.l          d0,(a0)
+0000278C  4EF9 000027A0           2146          jmp             UpdateBulletTwo
+00002792                          2147  DestoryOneBullet
+00002792  4EB9 000028BE           2148          jsr             EraseBullets
+00002798  08B9 0000 00002935      2149          bclr            #0,(ActiveBullets)
+000027A0                          2150  UpdateBulletTwo
+000027A0  0839 0001 00002935      2151          btst            #1,(ActiveBullets)
+000027A8  6700 0040               2152          beq             UpdateBulletThree         
+000027AC                          2153          
+000027AC  2238 13D8               2154          move.l          (DeltaTime),d1
+000027B0  41F9 00002940           2155          lea             BulletTwoPosition,a0
+000027B6  3028 0008               2156          move.w          8(a0),d0
+000027BA  C1C1                    2157          muls            d1,d0
+000027BC  D090                    2158          add.l           (a0),d0
+000027BE  2080                    2159          move.l          d0,(a0)
+000027C0  B0BC 00001E00           2160          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+000027C6  6D00 0014               2161          blt             DestoryTwoBullet
+000027CA  B0BC 00025800           2162          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BULLET_SIZE_WIDTH<<8,d0
+000027D0  6E00 000A               2163          bgt             DestoryTwoBullet
+000027D4  2080                    2164          move.l          d0,(a0)
+000027D6  4EF9 000027EA           2165          jmp             UpdateBulletThree
+000027DC                          2166  DestoryTwoBullet
+000027DC  4EB9 000028BE           2167          jsr             EraseBullets
+000027E2  08B9 0001 00002935      2168          bclr            #1,(ActiveBullets)
+000027EA                          2169  UpdateBulletThree
+000027EA  0839 0002 00002935      2170          btst            #2,(ActiveBullets)
+000027F2  6700 0040               2171          beq             UpdateBulletEnd
+000027F6                          2172          
+000027F6  2238 13D8               2173          move.l          (DeltaTime),d1
+000027FA  41F9 0000294A           2174          lea             BulletThreePosition,a0
+00002800  3028 0008               2175          move.w          8(a0),d0
+00002804  C1C1                    2176          muls            d1,d0
+00002806  D090                    2177          add.l           (a0),d0
+00002808  2080                    2178          move.l          d0,(a0)
+0000280A  B0BC 00001E00           2179          cmp.l           #LEFT_SIDE_OF_SCREEN<<8,d0
+00002810  6D00 0014               2180          blt             DestoryThirdBullet
+00002814  B0BC 00025800           2181          cmp.l           #RIGHT_SIDE_OF_SCREEN<<8-BULLET_SIZE_WIDTH<<8,d0
+0000281A  6E00 000A               2182          bgt             DestoryThirdBullet
+0000281E  2080                    2183          move.l          d0,(a0)
+00002820  4EF9 00002834           2184          jmp             UpdateBulletEnd
+00002826                          2185  DestoryThirdBullet
+00002826  4EB9 000028BE           2186          jsr             EraseBullets
+0000282C  08B9 0002 00002935      2187          bclr            #2,(ActiveBullets)
+00002834                          2188          
+00002834                          2189  UpdateBulletEnd       
+00002834  4E75                    2190          rts
+00002836                          2191          
+00002836                          2192  DrawBullets:
+00002836  223C 00FFFFFF           2193          move.l          #BULLET_COLOR,d1
+0000283C  103C 0050               2194              move.b              #SET_PEN_COLOR_COMMAND,d0
+00002840  4E4F                    2195              trap                #15
+00002842  103C 0051               2196              move.b              #SET_FILL_COLOR_COMMAND,d0
+00002846  4E4F                    2197              trap                #15
+00002848  103C 0058               2198              move.b              #DRAW_CIRCLE_COMMAND,d0
+0000284C                          2199              
+0000284C  1A39 00002935           2200              move.b          (ActiveBullets),d5
+00002852  6700 004A               2201          beq             EndDrawBullets
+00002856                          2202                      
+00002856                          2203  DrawFirstBullet     
+00002856  0839 0000 00002935      2204          btst            #0,(ActiveBullets)
+0000285E  6700 000E               2205          beq             DrawSecondBullet
+00002862                          2206          
+00002862  4DF9 00002936           2207              lea             BulletOnePosition,a6
+00002868  4EB9 000028A0           2208          jsr             DrawSpecificBulletAtA6
+0000286E                          2209  
+0000286E                          2210  DrawSecondBullet
+0000286E  0839 0001 00002935      2211          btst            #1,(ActiveBullets)
+00002876  6700 000E               2212          beq             DrawThirdBullet
+0000287A                          2213          
+0000287A  4DF9 00002940           2214          lea             BulletTwoPosition,a6
+00002880  4EB9 000028A0           2215          jsr             DrawSpecificBulletAtA6
+00002886                          2216  
+00002886                          2217  DrawThirdBullet    
+00002886  0839 0002 00002935      2218          btst            #2,(ActiveBullets)
+0000288E  6700 000E               2219          beq             EndDrawBullets
+00002892                          2220          
+00002892  4DF9 0000294A           2221          lea             BulletThreePosition,a6
+00002898  4EB9 000028A0           2222          jsr             DrawSpecificBulletAtA6
+0000289E                          2223  
+0000289E                          2224  EndDrawBullets
+0000289E  4E75                    2225          rts
+000028A0                          2226          
+000028A0                          2227  DrawSpecificBulletAtA6
+000028A0  2216                    2228          move.l          (a6),d1
+000028A2  E089                    2229              lsr.l           #8,d1
+000028A4  242E 0004               2230              move.l          4(a6),d2
+000028A8  E08A                    2231          lsr.l           #8,d2
+000028AA  2601                    2232          move.l          d1,d3
+000028AC  0683 0000000A           2233          add.l           #BULLET_SIZE_WIDTH,d3
+000028B2  2802                    2234              move.l          d2,d4
+000028B4  0684 0000000A           2235          add.l           #BULLET_SIZE_HEIGHT,d4  
+000028BA  4E4F                    2236          trap            #15
+000028BC                          2237          
+000028BC  4E75                    2238          rts
+000028BE                          2239      
+000028BE                          2240  EraseBullets:
+000028BE                          2241          
+000028BE                          2242  EraseFirstBullet
+000028BE  0839 0000 00002935      2243          btst            #0,(ActiveBullets)
+000028C6  6700 000E               2244          beq             EraseSecondBullet
+000028CA                          2245          
+000028CA  4DF9 00002936           2246          lea             BulletOnePosition,a6
+000028D0  4EB9 00002908           2247          jsr             EraseCall
+000028D6                          2248          
+000028D6                          2249  EraseSecondBullet
+000028D6  0839 0001 00002935      2250          btst            #1,(ActiveBullets)
+000028DE  6700 000E               2251          beq             EraseThirdBullet
+000028E2  4DF9 00002940           2252          lea             BulletTwoPosition,a6
+000028E8  4EB9 00002908           2253          jsr             EraseCall
+000028EE                          2254          
+000028EE                          2255  EraseThirdBullet
+000028EE  0839 0002 00002935      2256          btst            #2,(ActiveBullets)
+000028F6  6700 003A               2257          beq             EraseBulletDone
+000028FA  4DF9 0000294A           2258          lea             BulletThreePosition,a6
+00002900  4EB9 00002908           2259          jsr             EraseCall
+00002906  4E75                    2260          rts
+00002908                          2261  EraseCall
+00002908  2016                    2262          move.l          (a6),d0
+0000290A  E088                    2263          lsr.l           #8,d0
+0000290C  5380                    2264          sub.l           #1,d0
+0000290E  222E 0004               2265          move.l          4(a6),d1
+00002912  E089                    2266          lsr.l           #8,d1
+00002914  0481 FFFFFFFF           2267          sub.l           #-1,d1
+0000291A                          2268  
+0000291A  41F9 00002F20           2269          lea.l           Bitmap, a0
+00002920  2000                    2270          move.l          d0,d0
+00002922  2201                    2271          move.l          d1,d1
+00002924  740C                    2272          move.l          #BULLET_DRAW_SIZE_WIDTH,d2
+00002926  760A                    2273          move.l          #BULLET_SIZE_HEIGHT,d3
+00002928  2800                    2274          move.l          d0,d4
+0000292A  2A01                    2275          move.l          d1,d5
+0000292C  4EB8 1288               2276          jsr             DrawBackgroundBitmap
+00002930  4E75                    2277          rts
+00002932                          2278  EraseBulletDone
+00002932  4E75                    2279          rts        
+00002934                          2280  
+00002934= 03                      2281  AllowedBullets              dc.b MAX_ALLOWED_BULLETS
+00002935= 00                      2282  ActiveBullets               dc.b 0
+00002936= 00000000 00000000       2283  BulletOnePosition           dc.l 0<<8,0<<8
+0000293E= 0000                    2284  BulletOneSpeed              dc.w 0
+00002940= 00000000 00000000       2285  BulletTwoPosition           dc.l 0<<8,0<<8
+00002948= 0000                    2286  BulletTwoSpeed              dc.w 0
+0000294A= 00000000 00000000       2287  BulletThreePosition         dc.l 0<<8,0<<8
+00002952= 0000                    2288  BulletThreeSpeed            dc.w 0
+00002954                          2289  
+00002954= 00000000                2290  DebounceOneTime             dc.l 0
+00002958                          2291  
+00002958                          2292  
+00002958                          2293  
+00002958                          2294  
+00002958                          2295  
+00002958                          2296  
+00002958                          2297  -------------------- end include --------------------
+00002958                          2298          INCLUDE "BitmapDrawer.x68"
+00002958                          2299      
+00002958  =00000050               2300  PEN_COLOR_TRAP_CODE                     EQU     80
+00002958  =00000052               2301  DRAW_PIXEL_TRAP_CODE                    EQU     82
+00002958  =00000021               2302  SET_OUTPUT_RESOLUTION_TRAP_CODE         EQU     33
+00002958                          2303  
+00002958  =0000424D               2304  BITMAP_HEADER_FIELD                     EQU     16973
+00002958  =00000012               2305  BITMAP_WIDTH_OFFSET                     EQU     18
+00002958  =00000016               2306  BITMAP_HEIGHT_OFFSET                    EQU     22
+00002958  =0000000A               2307  BITMAP_PIXEL_ARRAY_OFFSET               EQU     10
+00002958  =00000036               2308  BITMAP_COLOR_ARRAY_OFFSET               EQU     54
+00002958  =0000002E               2309  BITMAP_NUM_OF_COLOR_IN_PALETTE          EQU     46
+00002958                          2310  
+00002958  =00000004               2311  STACK_ARGUMENT_ONE                      EQU     4
+00002958  =00000008               2312  STACK_ARGUMENT_TWO                      EQU     8
+00002958  =0000000C               2313  STACK_ARGUMENT_THREE                    EQU     12
+00002958  =00000010               2314  STACK_ARGUMENT_FOUR                     EQU     16
+00002958  =00000014               2315  STACK_ARGUMENT_FIVE                     EQU     20
+00002958  =00000018               2316  STACK_ARGUMENT_SIX                      EQU     24
+00002958  =0000001C               2317  STACK_ARGUMENT_SEVEN                    EQU     28
+00002958                          2318  
+00002958  =00000004               2319  LONG_LENGTH_IN_BYTES                    EQU     4
+00002958                          2320  
+00002958  =00000280               2321  OUTPUT_WIDTH                            EQU     640
+00002958  =000001E0               2322  OUTPUT_HEIGHT                           EQU     480
+00002958                          2323     
+00002958                          2324  ;START    ORG    $1000
+00002958                          2325          
+00002958                          2326  TurnAddressToBigEndian: ; address in d7, returns address in d7
+00002958  E15F                    2327          rol.w       #8, d7
+0000295A  4847                    2328          swap        d7
+0000295C  E15F                    2329          rol.w       #8, d7 
+0000295E  4E75                    2330          rts
+00002960                          2331  
+00002960                          2332  DrawBitmap ;Arguemnts bitmap address, x,y,width,height (of bitmap) and x,y (where to draw)
+00002960                          2333     
+00002960  226F 001C               2334          move.l      STACK_ARGUMENT_SEVEN(sp),a1     ; check if valid bitmap
+00002964                          2335          
+00002964                          2336          ;get address (in memeory of pixel array) and put it into a2
+00002964  2449                    2337          move.l      a1,a2
+00002966  D5FC 0000000A           2338          add.l       #BITMAP_PIXEL_ARRAY_OFFSET,a2
+0000296C  2E12                    2339          move.l      (a2),d7
+0000296E  4EB8 2958               2340          jsr         TurnAddressToBigEndian
+00002972  2447                    2341          move.l      d7,a2
+00002974  D5C9                    2342          add.l       a1,a2
+00002976                          2343          
+00002976                          2344          ;might need to change to long but if only 256 colors then byte will work
+00002976                          2345          ;go to non palette version if there is 0 colors in the palette
+00002976  1029 002E               2346          move.b      BITMAP_NUM_OF_COLOR_IN_PALETTE(a1),d0
+0000297A  6700 00EA               2347          beq         DrawNonPalette   
+0000297E                          2348          
+0000297E                          2349  DrawPalette:
+0000297E                          2350          ;store the location of the color array to later offset
+0000297E  2649                    2351          move.l      a1,a3
+00002980  D7FC 00000036           2352          add.l       #BITMAP_COLOR_ARRAY_OFFSET,a3
+00002986                          2353  
+00002986  242F 0004               2354          move.l      STACK_ARGUMENT_ONE(sp),d2
+0000298A  D4AF 000C               2355          add.l       STACK_ARGUMENT_THREE(sp),d2
+0000298E  5382                    2356          sub.l       #1,d2
+00002990                          2357          
+00002990  262F 0008               2358          move.l      STACK_ARGUMENT_TWO(sp),d3
+00002994                          2359       
+00002994  282F 000C               2360          move.l      STACK_ARGUMENT_THREE(sp),d4
+00002998  5284                    2361          add.l       #1,d4
+0000299A                          2362          
+0000299A  2A2F 0010               2363          move.l      STACK_ARGUMENT_FOUR(sp),d5
+0000299E                          2364  
+0000299E  2E29 0012               2365          move.l      BITMAP_WIDTH_OFFSET(a1),d7      ;store the offset between rows
+000029A2  4EB8 2958               2366          jsr         TurnAddressToBigEndian
+000029A6  2C07                    2367          move.l      d7,d6
+000029A8  CCBC 00000003           2368          and.l       #3,d6                           ;padding
+000029AE  CCFC 0003               2369          mulu        #3,d6
+000029B2  CCBC 00000003           2370          and.l       #3,d6                           ;padding
+000029B8  DE86                    2371          add.l       d6,d7
+000029BA  2A47                    2372          move.l      d7,a5
+000029BC  9EAF 0010               2373          sub.l       STACK_ARGUMENT_FOUR(sp),d7 
+000029C0  2C47                    2374          move.l      d7,a6
+000029C2                          2375          
+000029C2  204A                    2376          move.l      a2,a0
+000029C4  2E29 0016               2377          move.l      BITMAP_HEIGHT_OFFSET(a1),d7
+000029C8  4EB8 2958               2378          jsr         TurnAddressToBigEndian
+000029CC  9EAF 000C               2379          sub.l       STACK_ARGUMENT_THREE(sp),d7
+000029D0  9EAF 0014               2380          sub.l       STACK_ARGUMENT_FIVE(sp),d7
+000029D4  2C0D                    2381          move.l      a5,d6
+000029D6  CCC7                    2382          mulu        d7,d6
+000029D8  DCAF 0018               2383          add.l       STACK_ARGUMENT_SIX(sp),d6
+000029DC  D1C6                    2384          add.l       d6,a0
+000029DE                          2385          
+000029DE  2E05                    2386          move.l      d5,d7
+000029E0  CEBC 00000001           2387          and.l       #1,d7
+000029E6                          2388  
+000029E6                          2389  PaletteEvenOrOdd: 
+000029E6  3E07                    2390          move        d7,d7
+000029E8  6700 0026               2391          beq         DrawPaletteLoop
+000029EC                          2392  DrawOnePointPalette:
+000029EC  284B                    2393          move.l      a3,a4
+000029EE  4246                    2394          clr.w       d6
+000029F0  DC18                    2395          add.b       (a0)+,d6
+000029F2  E54E                    2396          lsl.w       #2,d6
+000029F4  D9C6                    2397          add.l       d6,a4
+000029F6  2214                    2398          move.l      (a4),d1                     ;get color value into d1 to set pen color
+000029F8  E089                    2399          lsr.l       #8,d1
+000029FA                          2400          
+000029FA                          2401          ;Set pen color
+000029FA  7050                    2402          move.l      #PEN_COLOR_TRAP_CODE,d0
+000029FC  4E4F                    2403          trap        #15
+000029FE                          2404          
+000029FE                          2405          ;Color at this point
+000029FE  2203                    2406          move.l      d3,d1
+00002A00  7052                    2407          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+00002A02  4E4F                    2408          trap        #15
+00002A04                          2409          
+00002A04  5283                    2410          addi.l      #1,d3
+00002A06  0685 FFFFFFFF           2411          addi.l      #-1,d5
+00002A0C  6700 003E               2412          beq         FinishInnerLoopPalette
+00002A10                          2413  
+00002A10                          2414  DrawPaletteLoop: 
+00002A10                          2415          
+00002A10  284B                    2416          move.l      a3,a4
+00002A12  2A4B                    2417          move.l      a3,a5
+00002A14  7C00                    2418          moveq.l     #0,d6
+00002A16  DC18                    2419          add.b       (a0)+,d6
+00002A18  4846                    2420          swap        d6
+00002A1A  DC18                    2421          add.b       (a0)+,d6
+00002A1C  E58E                    2422          lsl.l       #2,d6
+00002A1E  D8C6                    2423          add.w       d6,a4
+00002A20  4846                    2424          swap        d6
+00002A22  DAC6                    2425          add.w       d6,a5
+00002A24  2215                    2426          move.l      (a5),d1                     ;get color value into d1 to set pen color
+00002A26  E089                    2427          lsr.l       #8,d1
+00002A28                          2428          
+00002A28                          2429          ;Set pen color
+00002A28  7050                    2430          move.l      #PEN_COLOR_TRAP_CODE,d0
+00002A2A  4E4F                    2431          trap        #15
+00002A2C                          2432          
+00002A2C                          2433          ;Color at this point
+00002A2C  2203                    2434          move.l      d3,d1
+00002A2E  7052                    2435          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+00002A30  4E4F                    2436          trap        #15
+00002A32                          2437          
+00002A32  5283                    2438          addq.l      #1,d3       
+00002A34  2214                    2439          move.l      (a4),d1                     ;get color value into d1 to set pen color
+00002A36  E089                    2440          lsr.l       #8,d1
+00002A38                          2441          
+00002A38                          2442          ;Set pen color
+00002A38  7050                    2443          move.l      #PEN_COLOR_TRAP_CODE,d0
+00002A3A  4E4F                    2444          trap        #15
+00002A3C                          2445          
+00002A3C                          2446          ;Color at this point
+00002A3C  2203                    2447          move.l      d3,d1
+00002A3E  7052                    2448          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+00002A40  4E4F                    2449          trap        #15
+00002A42                          2450          
+00002A42  5283                    2451          addi.l      #1,d3
+00002A44  0685 FFFFFFFE           2452          addi.l      #-2,d5
+00002A4A  66C4                    2453          bne         DrawPaletteLoop
+00002A4C                          2454  FinishInnerLoopPalette:
+00002A4C  262F 0008               2455          move.l      STACK_ARGUMENT_TWO(sp),d3
+00002A50  2A2F 0010               2456          move.l      STACK_ARGUMENT_FOUR(sp),d5
+00002A54  D1CE                    2457          add.l       a6,a0
+00002A56  0682 FFFFFFFF           2458          addi.l      #-1,d2
+00002A5C  0684 FFFFFFFF           2459          addi.l      #-1,d4
+00002A62  6682                    2460          bne         PaletteEvenOrOdd
+00002A64                          2461         
+00002A64  4E75                    2462          rts   
+00002A66                          2463       
+00002A66                          2464          
+00002A66                          2465  DrawNonPalette:
+00002A66                          2466          
+00002A66  242F 0004               2467          move.l      STACK_ARGUMENT_ONE(sp),d2
+00002A6A  D4AF 000C               2468          add.l       STACK_ARGUMENT_THREE(sp),d2
+00002A6E  5382                    2469          sub.l       #1,d2
+00002A70                          2470          
+00002A70  262F 0008               2471          move.l      STACK_ARGUMENT_TWO(sp),d3
+00002A74  2643                    2472          move.l      d3,a3
+00002A76                          2473       
+00002A76  282F 000C               2474          move.l      STACK_ARGUMENT_THREE(sp),d4
+00002A7A  5284                    2475          add.l       #1,d4
+00002A7C                          2476          
+00002A7C  2A2F 0010               2477          move.l      STACK_ARGUMENT_FOUR(sp),d5
+00002A80  2845                    2478          move.l      d5,a4
+00002A82                          2479  
+00002A82  2E29 0012               2480          move.l      BITMAP_WIDTH_OFFSET(a1),d7      ;store the offset between rows
+00002A86  4EB8 2958               2481          jsr         TurnAddressToBigEndian
+00002A8A  2C07                    2482          move.l      d7,d6
+00002A8C  DE86                    2483          add.l       d6,d7
+00002A8E  DE86                    2484          add.l       d6,d7
+00002A90  CCBC 00000003           2485          and.l       #3,d6
+00002A96  DE86                    2486          add.l       d6,d7
+00002A98  2A47                    2487          move.l      d7,a5
+00002A9A  9EAF 0010               2488          sub.l       STACK_ARGUMENT_FOUR(sp),d7  
+00002A9E  9EAF 0010               2489          sub.l       STACK_ARGUMENT_FOUR(sp),d7
+00002AA2  9EAF 0010               2490          sub.l       STACK_ARGUMENT_FOUR(sp),d7  
+00002AA6  2C47                    2491          move.l      d7,a6
+00002AA8                          2492          
+00002AA8  204A                    2493          move.l      a2,a0
+00002AAA  2E29 0016               2494          move.l      BITMAP_HEIGHT_OFFSET(a1),d7
+00002AAE  4EB8 2958               2495          jsr         TurnAddressToBigEndian
+00002AB2  9EAF 000C               2496          sub.l       STACK_ARGUMENT_THREE(sp),d7
+00002AB6  9EAF 0014               2497          sub.l       STACK_ARGUMENT_FIVE(sp),d7
+00002ABA  2C0D                    2498          move.l      a5,d6
+00002ABC  CCC7                    2499          mulu        d7,d6
+00002ABE  DCAF 0018               2500          add.l       STACK_ARGUMENT_SIX(sp),d6
+00002AC2  DCAF 0018               2501          add.l       STACK_ARGUMENT_SIX(sp),d6
+00002AC6  DCAF 0018               2502          add.l       STACK_ARGUMENT_SIX(sp),d6
+00002ACA  D1C6                    2503          add.l       d6,a0
+00002ACC                          2504          
+00002ACC  2C08                    2505          move.l      a0,d6
+00002ACE  CCBC 00000001           2506          and.l       #1,d6
+00002AD4  1E06                    2507          move.b      d6,d7
+00002AD6                          2508  
+00002AD6                          2509  DrawNonPaletteLoop:
+00002AD6                          2510  
+00002AD6  1C06                    2511          move.b      d6,d6
+00002AD8  6600 0010               2512          bne         DrawNonPaletteOdd
+00002ADC                          2513          
+00002ADC                          2514  DrawNonPaletteEven:
+00002ADC  2210                    2515          move.l      (a0),d1
+00002ADE  E089                    2516          lsr.l       #8,d1
+00002AE0  5688                    2517          add.l       #3,a0      
+00002AE2  7C01                    2518          moveq.l     #1,d6
+00002AE4  4EF9 00002AF4           2519          jmp         DrawNonPaletteDrawer
+00002AEA                          2520          
+00002AEA                          2521  DrawNonPaletteOdd:
+00002AEA  4241                    2522          clr.w       d1
+00002AEC  1218                    2523          move.b      (a0)+,d1
+00002AEE  4841                    2524          swap        d1
+00002AF0  3218                    2525          move.w      (a0)+,d1
+00002AF2  7C00                    2526          moveq.l     #0,d6
+00002AF4                          2527          
+00002AF4                          2528  DrawNonPaletteDrawer:
+00002AF4                          2529          ;Set pen color
+00002AF4  7050                    2530          move.l      #PEN_COLOR_TRAP_CODE,d0
+00002AF6  4E4F                    2531          trap        #15
+00002AF8                          2532          
+00002AF8                          2533          ;draw pixel
+00002AF8  2203                    2534          move.l      d3,d1
+00002AFA  7052                    2535          move.l      #DRAW_PIXEL_TRAP_CODE,d0
+00002AFC  4E4F                    2536          trap        #15
+00002AFE                          2537  
+00002AFE  5283                    2538          addi.l      #1,d3
+00002B00  0685 FFFFFFFF           2539          addi.l      #-1,d5
+00002B06  66CE                    2540          bne         DrawNonPaletteLoop       
+00002B08  260B                    2541          move.l      a3,d3
+00002B0A  2A0C                    2542          move.l      a4,d5
+00002B0C  D1CE                    2543          add.l       a6,a0
+00002B0E  1C07                    2544          move.b      d7,d6
+00002B10  0682 FFFFFFFF           2545          addi.l      #-1,d2
+00002B16  0684 FFFFFFFF           2546          addi.l      #-1,d4
+00002B1C  66B8                    2547          bne         DrawNonPaletteLoop
+00002B1E                          2548          
+00002B1E  4E75                    2549          rts
+00002B20                          2550               
+00002B20                          2551  ;Bitmap      INCBIN "ancient-city-in-the-desert-background-bmp-color-table.bmp"
+00002B20                          2552  Platform    INCBIN "FinalPlatform.bmp"
+00002E14                          2553  Dropper     INCBIN "Dropper.bmp"
+00002F20                          2554  Bitmap      INCBIN "FinalBackground.bmp"
+0004DF90                          2555  YouLose     INCBIN "YouLost.bmp"
+0004F54C                          2556  YouWin      INCBIN "YouWon.bmp"
+00050B04                          2557  
+00050B04                          2558  
+00050B04                          2559  
+00050B04                          2560  
+00050B04                          2561  
+00050B04                          2562  
+00050B04                          2563  
+00050B04                          2564  
+00050B04                          2565  
+00050B04                          2566  
+00050B04                          2567  
+00050B04                          2568  
+00050B04                          2569  
+00050B04                          2570  
+00050B04                          2571  
+00050B04                          2572  
+00050B04                          2573  -------------------- end include --------------------
+00050B04                          2574          INCLUDE "RandomNumbers.x68"
+00050B04  =00000008               2575  GET_TIME_COMMAND        equ     8
+00050B04                          2576  
+00050B04                          2577  seedRandomNumber
+00050B04  48E7 FFFE               2578          movem.l ALL_REG,-(sp)
+00050B08  4286                    2579          clr.l   d6
+00050B0A  103C 0008               2580          move.b  #GET_TIME_COMMAND,d0
+00050B0E  4E4F                    2581          TRAP    #15
+00050B10                          2582  
+00050B10  23C1 00050B92           2583          move.l  d1,RANDOMVAL
+00050B16  4CDF 7FFF               2584          movem.l (sp)+,ALL_REG
+00050B1A  4E75                    2585          rts
+00050B1C                          2586  
+00050B1C                          2587  getRandomByteIntoD6
+00050B1C  48E7 8000               2588          movem.l d0,-(sp)
+00050B20  48E7 4000               2589          movem.l d1,-(sp)
+00050B24  48E7 2000               2590          movem.l d2,-(sp)
+00050B28  2039 00050B92           2591          move.l  RANDOMVAL,d0
+00050B2E  72AF                    2592          moveq   #$AF-$100,d1
+00050B30  7412                    2593          moveq   #18,d2
+00050B32                          2594  Ninc0   
+00050B32  D080                    2595          add.l   d0,d0
+00050B34  6400 0004               2596          bcc     Ninc1
+00050B38  B300                    2597          eor.b   d1,d0
+00050B3A                          2598  Ninc1
+00050B3A  51CA FFF6               2599          dbf     d2,Ninc0
+00050B3E                          2600          
+00050B3E  23C0 00050B92           2601          move.l  d0,RANDOMVAL
+00050B44  4286                    2602          clr.l   d6
+00050B46  1C00                    2603          move.b  d0,d6
+00050B48                          2604          
+00050B48  4CDF 0004               2605          movem.l (sp)+,d2
+00050B4C  4CDF 0002               2606          movem.l (sp)+,d1
+00050B50  4CDF 0001               2607          movem.l (sp)+,d0
+00050B54  4E75                    2608          rts
+00050B56                          2609          
+00050B56                          2610  
+00050B56                          2611  getRandomLongIntoD6
+00050B56  48E7 FFFE               2612          movem.l ALL_REG,-(sp)
+00050B5A  4EB9 00050B1C           2613          jsr     getRandomByteIntoD6
+00050B60  1A06                    2614          move.b  d6,d5
+00050B62  4EB9 00050B1C           2615          jsr     getRandomByteIntoD6
+00050B68  E18D                    2616          lsl.l   #8,d5
+00050B6A  1A06                    2617          move.b  d6,d5
+00050B6C  4EB9 00050B1C           2618          jsr     getRandomByteIntoD6
+00050B72  E18D                    2619          lsl.l   #8,d5
+00050B74  1A06                    2620          move.b  d6,d5
+00050B76  4EB9 00050B1C           2621          jsr     getRandomByteIntoD6
+00050B7C  E18D                    2622          lsl.l   #8,d5
+00050B7E  1A06                    2623          move.b  d6,d5
+00050B80  23C5 00050B96           2624          move.l  d5,TEMPRANDOMLONG
+00050B86  4CDF 7FFF               2625          movem.l (sp)+,ALL_REG
+00050B8A  2C39 00050B96           2626          move.l  TEMPRANDOMLONG,d6
+00050B90  4E75                    2627          rts
+00050B92                          2628  
+00050B92                          2629  
+00050B92                          2630  RANDOMVAL       ds.l    1
+00050B96                          2631  TEMPRANDOMLONG  ds.l    1
+00050B9A                          2632  
+00050B9A                          2633          END     START
+00050B9A                          2634  -------------------- end include --------------------
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+ACTIVEBOSSBULLET    1984
+ACTIVEBOSSRAIN      1A4C
+ACTIVEBULLETS       2935
+ACTIVEBULLETSFOUND  228C
+ACTIVESEGMENTFOUND  1746
+ALLBOSSBULLETCHECKED  199E
+ALLBOSSBULLETDRAWN  2314
+ALLBOSSBULLETERASED  238A
+ALLBOSSBULLETSUPDATED  22A0
+ALLBOSSRAINCHECKED  1A66
+ALLBOSSRAINDRAWN    1668
+ALLOWEDBULLETS      2934
+ALLPLAYERBULLETCHECKED  18EC
+ALLSEGMENTSUPDATED  175E
+ALL_REG             7FFF
+BACKGROUND_IMG_HEIGHT  1E0
+BACKGROUND_IMG_WIDTH  280
+BITMAP              2F20
+BITMAP_COLOR_ARRAY_OFFSET  36
+BITMAP_HEADER_FIELD  424D
+BITMAP_HEIGHT_OFFSET  16
+BITMAP_NUM_OF_COLOR_IN_PALETTE  2E
+BITMAP_PIXEL_ARRAY_OFFSET  A
+BITMAP_WIDTH_OFFSET  12
+BLACK               0
+BLACK_BOX_BOTTOM_SIDE_OF_SCREEN  190
+BLACK_BOX_LEFT_SIDE_OF_SCREEN  1E
+BLACK_BOX_RIGHT_SIDE_OF_SCREEN  262
+BLACK_BOX_TOP_SIDE_OF_SCREEN  2D
+BOSSBULLETARRAY     2036
+BOSSBULLETDIDNOTCOLLIDE  1A24
+BOSSBULLETFOUND     1E92
+BOSSBULLETSACTIVE   2031
+BOSSBULLETSLEFTTOSHOOT  2030
+BOSSCOLOR           202C
+BOSSDIDNOTCOLLIDE   18AA
+BOSSHEALTH          1B66
+BOSSLAVAFILLPERCENT  2248
+BOSSLAVAFILLRATE    224C
+BOSSONGROUND        2026
+BOSSPOSITIONANDSIZE  2012
+BOSSRAINACTIVE      2127
+BOSSRAINARRAY       2128
+BOSSRAINDIDNOTCOLLIDE  1AE6
+BOSSRAINLEFTTOSHOOT  2126
+BOSSREACHBOTTOMUPDATE  1F6C
+BOSSREACHFLOOR      1C1A
+BOSSREACHLEFTSIDE   1F34
+BOSSREACHRIGHTSIDE  1F40
+BOSSSHOOTBULLETDONE  1EFC
+BOSSSHOOTLEFT       1EB4
+BOSSSHOOTRIGHT      1ED0
+BOSSSHOTDONE        1EEC
+BOSSSHOULDFACERIGHT  202A
+BOSSSTATE           202B
+BOSSSTATENEEDSTOWAIT  1BFC
+BOSSSTATEUPDATEDONE  1BFE
+BOSSTIMESTATESTART  2250
+BOSSTIMETOSHOOT     2032
+BOSSVELOCITYX       2022
+BOSSVELOCITYY       2024
+BOSS_BULLET_COLOR   FFFF00
+BOSS_BULLET_COUNT_SHOT  3
+BOSS_BULLET_DATA_SIZE_IN_BYTES  A
+BOSS_BULLET_HEIGHT  A
+BOSS_BULLET_SPEED   300
+BOSS_BULLET_WIDTH   A
+BOSS_GRAVITY_SIZE   30
+BOSS_HEIGHT         28
+BOSS_JUMP_DAMAGE    28
+BOSS_LAVA_DAMAGE    28
+BOSS_LAVA_FILL_RATE  180
+BOSS_MAX_BULLETS    6
+BOSS_MAX_RAIN       4
+BOSS_RAIN_DAMAGE    1E
+BOSS_RAIN_DATA_SIZE_IN_BYTES  12
+BOSS_SHOOT_DAMAGE   1E
+BOSS_SHOT_HEIGHT_OFFSET  19
+BOSS_START_HEALTH   FF
+BOSS_START_X        190
+BOSS_TIME_BETWEEN_SHOT  32
+BOSS_TIME_TO_JUMP_AND_FALL  2A
+BOSS_VELOCITY_UP    800
+BOSS_WAIT_TIME      A
+BOSS_WIDTH          28
+BOTTOM_SIDE_OF_SCREEN  190
+BULLETDIDNOTCOLLIDE  195C
+BULLETONEPOSITION   2936
+BULLETONESPEED      293E
+BULLETSETNEGATIVESPEED  271A
+BULLETSETPOSITIVESPEED  272E
+BULLETSFULL         2746
+BULLETTHREEPOSITION  294A
+BULLETTHREESPEED    2952
+BULLETTWOPOSITION   2940
+BULLETTWOSPEED      2948
+BULLET_COLOR        FFFFFF
+BULLET_DRAW_SIZE_WIDTH  C
+BULLET_SIZE_HEIGHT  A
+BULLET_SIZE_WIDTH   A
+BULLET_SPEED        300
+CALCULATETIMELEFT   17C8
+CHANGECOLORDONE     1C9A
+CHANGEINVULNERABLECOLOR  25D0
+CHECKACTIVEBULLET   18D2
+CHECKBOSSBULLETCOLLISIONATA6  19A0
+CHECKBOSSBULLETS    195E
+CHECKBOSSBULLETSLOOP  1966
+CHECKBOSSRAIN       1A26
+CHECKBOSSRAINCOLLISIONATA6  1A68
+CHECKBOSSRAINLOOP   1A2E
+CHECKBOSSSTATE      1BA6
+CHECKCOLLISION      1806
+CHECKGAMESTATUS     10CC
+CHECKLAVA           1AE8
+CHECKPLAYERANDBOSSCOLLISION  1826
+CHECKPLAYERBULLET   18AC
+CHECKPLAYERBULLETCOLLISIONATA6  18EE
+CHECKPLAYERBULLETLOOP  18B4
+CLEARSCREEN         12F6
+CLEARSEGMENTS       179E
+CLEAR_SCREEN_COMMAND  B
+CLEAR_SCREEN_MAGIC_VAL  FF00
+CREATEBULLETS       269C
+CREATEFIRSTBULLET   26A2
+CREATESECONDBULLET  26CA
+CREATETHIRDBULLET   26F2
+DEBOUNCEONETIME     2954
+DEBOUNCEUPTIME      2656
+DEBOUNCE_TIME       A
+DELETEBOSSBULLET    22D2
+DELTATIME           13D8
+DESTORYONEBULLET    2792
+DESTORYTHIRDBULLET  2826
+DESTORYTWOBULLET    27DC
+DESTROYRAIN         1616
+DONEERASE           1554
+DONEGROWRAIN        158C
+DONTSWAPSIGN        1FFC
+DOSTATE             1BBA
+DOUBLE_BUFFERED_MODE  11
+DOWNINPUT           245E
+DRAWACTIVEBOSSBULLETFOUND  22FA
+DRAWACTIVEBOSSBULLETLOOP  22DE
+DRAWACTIVERAINFOUND  164E
+DRAWACTIVERAINLOOP  1630
+DRAWACTIVESEGMENT   1760
+DRAWBACKGROUNDBITMAP  1288
+DRAWBITMAP          2960
+DRAWBOSS            1C1C
+DRAWBOSSBULLETS     22D8
+DRAWBOSSRAIN        1628
+DRAWBULLETS         2836
+DRAWDONEBOSS        1CC0
+DRAWDROPPERS        132C
+DRAWFIRSTBULLET     2856
+DRAWGAMEOBJECTS     12CA
+DRAWING_MODE_TRAP_CODE  5C
+DRAWINVULNERABLEPLAYER  25C6
+DRAWLAVA            144A
+DRAWLAVADONE        14DE
+DRAWNONPALETTE      2A66
+DRAWNONPALETTEDRAWER  2AF4
+DRAWNONPALETTEEVEN  2ADC
+DRAWNONPALETTELOOP  2AD6
+DRAWNONPALETTEODD   2AEA
+DRAWONEPOINTPALETTE  29EC
+DRAWPALETTE         297E
+DRAWPALETTELOOP     2A10
+DRAWPLATFORMS       1394
+DRAWPLAYER          25A4
+DRAWSECONDBULLET    286E
+DRAWSEGMENT         1706
+DRAWSPECIFICBOSSBULLETATA6  2316
+DRAWSPECIFICBULLETATA6  28A0
+DRAWSPECIFICRAINATA6  166A
+DRAWTHIRDBULLET     2886
+DRAWTIMELEFT        16A8
+DRAW_CIRCLE_COMMAND  58
+DRAW_PIXEL_TRAP_CODE  52
+DRAW_RECT_COMMAND   57
+DROPPER             2E14
+DROPPER_BOTTOM_OF_SCREEN  186
+DROPPER_FOUR_X      1EA
+DROPPER_HEIGHT      17
+DROPPER_ONE_X       8E
+DROPPER_THREE_X     176
+DROPPER_TWO_X       102
+DROPPER_WIDTH       8
+DROPPER_Y           2D
+DROP_SIZE           A00
+DROP_SIZE_INCREASE  20
+EMPTYLONG           1446
+ENDDRAWBULLETS      289E
+ENDTIME             13E0
+ERASEACTIVEBOSSBULLETFOUND  236A
+ERASEACTIVEBOSSBULLETLOOP  2350
+ERASEBOSS           1CC2
+ERASEBOSSBULLETS    234A
+ERASEBULLETDONE     2932
+ERASEBULLETS        28BE
+ERASECALL           2908
+ERASEDSPECIFICBOSSBULLETATA6  238C
+ERASEFIRSTBULLET    28BE
+ERASELAVA           14E0
+ERASEPLAYER         25FE
+ERASESECONDBULLET   28D6
+ERASETHIRDBULLET    28EE
+FILLRATEISNEGATIVE  1FC4
+FILLRATEISPOSITIVE  1FE0
+FINDACTIVEBOSSBULLETLOOP  2276
+FINDACTIVESEGMENTSLOOP  1732
+FINDOPENBOSSBULLETLOOP  1E7A
+FINISHINNERLOOPPALETTE  2A4C
+FINISHSETSTATETHREE  1E2E
+FINISHSTATETHREE    1F9E
+FINISHUPDATINGBOSSX  1F46
+FINISHUPDATINGPLAYERX  24D8
+FINSIHEDSTATEONE    1EFE
+FULL_ACTIVE_BULLETS  7
+GAMELOOP            10A0
+GAMEOVER            1106
+GAMEOVERBOSSKILLED  13E8
+GAMEOVERLOOP        1154
+GAMEOVERPLAYERKILLED  1403
+GAMEOVERPRINT       1122
+GAMEOVERTIMERANOUT  141F
+GAMEOVERYOULOSE     111C
+GAMEOVERYOUWIN      1110
+GETDELTATIME        126E
+GETNEWSTATE         1BD0
+GETRANDOMBYTEINTOD6  50B1C
+GETRANDOMLONGINTOD6  50B56
+GET_KEY_INPUT_D1_ULDR  26252827
+GET_KEY_INPUT_D1___R  52
+GET_KEY_INPUT_D1____SP  20
+GET_KEY_INPUT_TRAP_CODE  13
+GET_TIME_COMMAND    8
+GET_TIME_SINCE_MIDNIGHT  8
+GRAVITY_SIZE        40
+INIITAL_DROP_SPEED  180
+LAVACHECKDONE       1B64
+LAVA_SIZE_FROM_BOTTOM  50
+LEFTINPUT           23EA
+LEFT_PLATFORM_LEFT_X  C8
+LEFT_SIDE_OF_SCREEN  1E
+LONG_LENGTH_IN_BYTES  4
+MAX_ALLOWED_BULLETS  3
+MOVEINPUTDONE       2466
+NINC0               50B32
+NINC1               50B3A
+OLDTIME             13DC
+ONEBUTTONSPRESSED   266C
+OTHERINPUTDONE      2694
+OUTPUT_HEIGHT       1E0
+OUTPUT_WIDTH        280
+PALETTEEVENORODD    29E6
+PEN_COLOR_TRAP_CODE  50
+PLATFORM            2B20
+PLATFORM_HEIGHT     C
+PLATFORM_WIDTH      2E
+PLATFORM_Y          12C
+PLAYERATPLATFORMHEIGHT  2550
+PLAYERCOLOR         265A
+PLAYERHEALTH        1B6A
+PLAYERINPUT         265E
+PLAYERJUMPCOUNTER   2652
+PLAYERLOOKINGRIGHT  264E
+PLAYERMOVEMENT      2646
+PLAYERNOTMOVINGDOWN  252C
+PLAYERNOTONPLATFORM  2594
+PLAYERONGROUND      264A
+PLAYERONPLATFORM    2580
+PLAYERPOSITIONANDSIZE  2636
+PLAYERREACHBOTTOMUPDATE  253C
+PLAYERREACHFLOOR    248A
+PLAYERREACHLEFTSIDE  24C6
+PLAYERREACHRIGHTSIDE  24D2
+PLAYERSHOULDJUMP    2662
+PLAYERVULNERABILITYTIME  1B6E
+PLAYER_BULLET_DAMAGE  8
+PLAYER_HEIGHT       14
+PLAYER_INVULNERABILITY_TIME  64
+PLAYER_START_HEALTH  FF
+PLAYER_START_X      64
+PLAYER_START_Y      12C
+PLAYER_VELOCITY     200
+PLAYER_VELOCITY_UP  680
+PLAYER_WIDTH        14
+RAINFALLING         15BC
+RAINUPDATEDONE      1626
+RANDOMVAL           50B92
+REPAINT_SCREEN_TRAP_CODE  5E
+RESETGAME           1166
+RIGHTINPUT          23D4
+RIGHT_PLATFORM_LEFT_X  18A
+RIGHT_SIDE_OF_SCREEN  262
+SCREEN_HEIGHT       1E0
+SCREEN_WIDTH        21C
+SEEDRANDOMNUMBER    50B04
+SEGMENTBITS         17E0
+SEGMENTXEND         17F8
+SEGMENTXSTART       17EA
+SEGMENTYEND         17FF
+SEGMENTYSTART       17F1
+SETSTATEFOUR        1E38
+SETSTATEONE         1CFA
+SETSTATETABLE       2254
+SETSTATETHREE       1D66
+SETSTATETWO         1D16
+SETSTATETWOFACELEFT  1D36
+SETSTATETWOFACERIGHT  1D3C
+SETSTATETWOOFFSET   1D40
+SETUP               1008
+SET_FILL_COLOR_COMMAND  51
+SET_OUTPUT_RESOLUTION_TRAP_CODE  21
+SET_PEN_COLOR_COMMAND  50
+STACK_ARGUMENT_FIVE  14
+STACK_ARGUMENT_FOUR  10
+STACK_ARGUMENT_ONE  4
+STACK_ARGUMENT_SEVEN  1C
+STACK_ARGUMENT_SIX  18
+STACK_ARGUMENT_THREE  C
+STACK_ARGUMENT_TWO  8
+START               1000
+START_X_TIME_LEFT   24E
+START_Y_TIME_LEFT   3C
+STATEFOURDRAW       1C8E
+STATEFOURENDED      1FFE
+STATEONEDRAW        1C6A
+STATETHREEDRAW      1C82
+STATETWODRAW        1C76
+STATEZERODRAW       1C5E
+SWAPBUFFERS         1324
+TEMPRANDOMLONG      50B96
+TIMELEFT            13E4
+TIME_TO_KILL_BOSS   78
+TURNADDRESSTOBIGENDIAN  2958
+TURNPERCENTTOYVALUEIND7  1556
+UNDEBOUNCE          2454
+UPDATEACTIVERAINFOUND  15E2
+UPDATEACTIVERAINLOOP  15C4
+UPDATEBOSS          1B72
+UPDATEBOSSBULLETS   2274
+UPDATEBOSSLOOKDONE  1B9A
+UPDATEBOSSLOOKLEFT  1B92
+UPDATEBOSSLOOKRIGHT  1B84
+UPDATEBULLETEND     2834
+UPDATEBULLETONE     2758
+UPDATEBULLETS       2666
+UPDATEBULLETSPOSITIONS  2748
+UPDATEBULLETTHREE   27EA
+UPDATEBULLETTWO     27A0
+UPDATEGAMEOBJECTS   12A4
+UPDATEPLAYER        23BE
+UPDATEPLAYERINFO    24A0
+UPDATERAIN          1568
+UPDATESPECIFICBOSSBULLET  22A2
+UPDATESPECIFICRAINATA6  15FC
+UPDATESTATEFOUR     1FA8
+UPDATESTATEONE      1E56
+UPDATESTATETABLE    2264
+UPDATESTATETHREE    1F88
+UPDATESTATETWO      1F08
+UPINPUT             2402
+WHITE               FFFFFF
+X_SEGMENT_OFFSET    C
+YELLOW              FFFF
+YOULOSE             4DF90
+YOUWIN              4F54C
